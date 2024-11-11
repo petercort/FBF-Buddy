@@ -46,8 +46,8 @@ jobs:
 
     - name: Update values.yaml
       run: |
-        cd helm
-        sed -i 's|APP_VERSION:.*|APP_VERSION: '${{  steps.get_latest_release.outputs.tag_name }}'|' values.yaml 
+        cd config
+        sed -i 's|APP_VERSION:.*|APP_VERSION: '${{  steps.get_latest_release.outputs.tag_name }}'|' event-buddy-values.yaml 
         git config --global user.name 'GitHub Actions'
         git config --global user.email 'no-reply@github.com'
         git add values.yaml
