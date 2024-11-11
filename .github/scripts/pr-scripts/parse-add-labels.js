@@ -5,7 +5,6 @@ module.exports = async ({github, context, core}) => {
     const body = context.payload.pull_request.body;
     const releaseTypes = ["major", "minor", "patch", "transition", "no release"];
     const changeTypes = ["feature", "enhancement", "fix", "bugfix", "chore"];
-    const qualityTypes = ["alpha", "beta"];
   
     const releaseMap = {
       'major': 'semver:major',
@@ -29,13 +28,10 @@ module.exports = async ({github, context, core}) => {
       failedChecks.push("No release type section found, please ensure you have updated your pull request with the correct release type.");
     }
   
-    const providerVersionSection = body.split('### (If Applicable) Specify Initial Provider Version')[1]?.split('###')[0]?.trim();
-  
     const changeTypeSection = body.split('## What type of change was made?')[1]?.split('##')[0]?.trim();
     if (!changeTypeSection) {
       failedChecks.push("No change type section found, please ensure you have updated your pull request with the correct change type.");
     }
-    const qualityTypeSection = body.split('## What type of Pre-Release is this?')[1]?.split('##')[0]?.trim();
   
     // Find all matches
     const releaseMatch = releaseTypes.filter(type => new RegExp(`^-\\s*${type}`, 'mi').test(releaseTypeSection));
@@ -59,35 +55,7 @@ module.exports = async ({github, context, core}) => {
       releaseLabel,
       changeLabel
     ].filter(Boolean);
-  
-    const providerVersionLabel = "provider-version-specified";
-    if (providerVersionSection) {
-      const providerVersionMatch = providerVersionSection.match(/^- (N\/A|\d+\.\d+\.\d+)$/mi);
-      console.log('Matched Provider Version:', providerVersionMatch[1]);
-      if (providerVersionMatch) {
-        if (providerVersionMatch && providerVersionMatch.length === 2) {
-          const version = providerVersionMatch[1];
-          if (version !== 'N/A') {
-            labelsToAdd.push(providerVersionLabel);
-            console.log('Adding provider version:', version);
-            core.setOutput('provider-version', version);
-          }
-        } else {
-          failedChecks.push("Provider version section must contain exactly one item, either a release version (e.g., 1.0.0) or N/A.");
-        }
-      }
-    };
-  
-    if (qualityTypeSection){
-      const qualityLabel = qualityTypes.filter(type => new RegExp(`^-\\s*${type}`, 'mi').test(qualityTypeSection));
-      console.log('Matched Pre-release Types:', qualityLabel);
-      if (qualityLabel.length > 1) {
-        failedChecks.push(`Pull request must have exactly one quality label, found ${qualityLabel.join(', ')}.`);
-      } else if (qualityLabel.length == 1) {
-        labelsToAdd.push(qualityLabel[0]);
-        core.setOutput('prerelease-type', qualityLabel);
-      }
-    };
+
   
     if (failedChecks.length > 0) {
       const commentBody = `### Label Check Failures\n\n${failedChecks.map(check => `- ${check}`).join('\n')}`;
@@ -119,7 +87,7 @@ module.exports = async ({github, context, core}) => {
       issue_number
     })).data.map(label => label.name);
   
-    const labelsToRemove = [...Object.values(releaseMap), ...Object.values(changeMap), ...qualityTypes, ...providerVersionLabel].filter(label => currentLabels.includes(label) && !labelsToAdd.includes(label));
+    const labelsToRemove = [...Object.values(releaseMap), ...Object.values(changeMap),].filter(label => currentLabels.includes(label) && !labelsToAdd.includes(label));
   
     for (const label of labelsToRemove) {
       await github.rest.issues.removeLabel({
