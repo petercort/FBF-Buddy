@@ -52,7 +52,7 @@ jobs:
 
   comment:
     needs: label
-    if: needs.label.outputs.is-merge-event == 'false' && needs.label.outputs.release-type != 'no-release'
+    if: needs.label.outputs.release-type != 'no-release'
     permissions:
       issues: write
       pull-requests: write
@@ -128,7 +128,7 @@ jobs:
           sed -i 's|APP_VERSION:.*|APP_VERSION: '${{ needs.label.outputs.release-version }}'|' ./config/event-buddy-values.yaml 
           cp ${{ github.workspace }}/tmp/updated-changelog.md CHANGELOG.md
           cp ${{ github.workspace }}/tmp/new-README.md README.md
-          git add CHANGELOG.md README.md event-buddy-values.yaml
+          git add CHANGELOG.md README.md config/event-buddy-values.yaml
           if ! git diff-index --quiet HEAD; then
             git commit -m "Bot: Updating CHANGELOG and README for release based on #${{ github.event.pull_request.number }}"
             git push origin ${{ github.event.pull_request.head.ref }}
