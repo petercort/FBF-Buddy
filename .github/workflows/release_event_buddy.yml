@@ -11,6 +11,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
     steps:
     - name: checkout 
       uses: actions/checkout@v4
@@ -24,7 +27,7 @@ jobs:
         echo "VERSION=$VERSION"
     - name: Build image
       run: docker build --file Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}" .
-      
+
     - name: Log in to registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
