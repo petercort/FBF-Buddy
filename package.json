@@ -1,0 +1,29 @@
+{
+    "name": "fbf-event-buddy",
+    "private": true,
+    "version": "1.0.0",
+    "description": "Cycling event app for Discord",
+    "main": "app.js",
+    "engines": {
+        "node": ">=20.x"
+    },
+    "scripts": {
+        "start": "node src/app.js",
+        "register": "node src/commands.js",
+        "dev": "nodemon src/app.js"
+    },
+    "author": "Peter Cort",
+    "license": "MIT",
+    "dependencies": {
+        "discord-interactions": "^4.0.0",
+        "discord.js": "^14.16.3",
+        "dotenv": "^16.4.5",
+        "express": "^4.18.2",
+        "fbf-event-buddy": "file:",
+        "sequelize": "^6.37.5",
+        "sqlite3": "^5.1.7"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.0"
+    }
+}
