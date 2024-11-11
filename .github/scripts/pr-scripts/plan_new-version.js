@@ -10,3 +10,4 @@ module.exports = ({github, context, core}) => {
     }
     core.setOutput("new-version", numbers.join('.'));
     return numbers.join('.');
+}
