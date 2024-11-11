@@ -11,6 +11,8 @@ jobs:
     outputs:
       release-type: ${{ steps.parse-labels.outputs.release-type }}
       change-type: ${{ steps.parse-labels.outputs.change-type }}
+      previous-version: ${{ steps.prevtag.outputs.previousversion }}
+      release-version: ${{ steps.new-version-standard.outputs.new-version }}
     permissions:
       issues: write
       pull-requests: write
