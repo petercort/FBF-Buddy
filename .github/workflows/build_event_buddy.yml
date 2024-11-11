@@ -44,6 +44,16 @@ jobs:
         docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
         docker push $IMAGE_ID:$VERSION
 
+    - name: Update values.yaml
+      run: |
+        cd helm
+        sed -i 's|APP_VERSION:.*|APP_VERSION: '${{  steps.get_latest_release.outputs.tag_name }}'|' values.yaml 
+        git config --global user.name 'GitHub Actions'
+        git config --global user.email 'no-reply@github.com'
+        git add values.yaml
+        git commit -m "Update values.yaml"
+        git push
+
     - name: Create Release
       uses: elgohr/Github-Release-Action@v5
       env:
