@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-buddy
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: event-buddy
+  template:
+    metadata:
+      labels:
+        app: event-buddy
+    spec:
+      containers:
+      - image: https://ghcr.io/petercort/event-buddy:0.1.0
+        name: event-buddy
+        ports:
+        - containerPort: 80
