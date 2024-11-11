@@ -19,7 +19,7 @@ jobs:
     - name: Get release version
       id: release-version
       run: |
-        VERSION-$(awk '/APP_VERSION/{print $NF}' config/event-buddy-values.yaml)
+        VERSION=$(awk '/APP_VERSION/{print $NF}' config/event-buddy-values.yaml)
         echo "VERSION=$VERSION" >> $GITHUB_ENV
         echo "VERSION=$VERSION"
     - name: Build image
