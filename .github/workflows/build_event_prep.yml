@@ -12,8 +12,9 @@ jobs:
       release-type: ${{ steps.parse-labels.outputs.release-type }}
       change-type: ${{ steps.parse-labels.outputs.change-type }}
     permissions:
-      packages: write
-      contents: write
+      issues: write
+      pull-requests: write
+      contents: read
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
