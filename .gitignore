@@ -131,3 +131,6 @@ dist
 
 # Local info thats staying in the local repo
 .local_secrets.md
+
+# sqlite
+*.sqlite
