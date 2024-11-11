@@ -14,7 +14,7 @@ spec:
         app: event-buddy
     spec:
       containers:
-      - image: ghcr.io/petercort/event-buddy:
+      - image: ghcr.io/petercort/event-buddy:{{ .Values.env.APP_VERSION }}
         name: event-buddy
         ports:
         - containerPort: 80
