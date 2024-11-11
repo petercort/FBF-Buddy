@@ -81,7 +81,7 @@ jobs:
         env:
           releaseVersion: '${{ needs.label.outputs.release-version }}'
           previousVersion: '${{ needs.label.outputs.previous-version }}'
-          changelog: '${{ needs.label.outputs.changelog-content }}'
+          changelogContent: '${{ needs.label.outputs.changelog-content }}'
         with:
           script: |
             const script = require('./src/.github/scripts/pr-scripts/comment_pr-comment.js')
