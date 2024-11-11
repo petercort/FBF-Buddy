@@ -9,28 +9,86 @@ env:
   IMAGE_NAME: event-buddy
 
 jobs:
-  build:
+  label:
     runs-on: ubuntu-latest
+    outputs:
+      release-type: ${{ steps.parse-labels.outputs.release-type }}
+      change-type: ${{ steps.parse-labels.outputs.change-type }}
+      prerelease-type: ${{ steps.parse-labels.outputs.prerelease-type }}
+      provider-version: ${{ steps.parse-labels.outputs.provider-version }}
     permissions:
       packages: write
       contents: write
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
     
+    - name: Parse and Add Labels
+      id: parse-labels
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const script = require('./src/.github/scripts/pr-scripts/parse-add-labels.js')
+          await script({github, context, core})
+
+    - name: Detect previous version number
+      id: prevtag
+      working-directory: src
+      run: |
+        if previousversion=$(git describe --tags --match="[0-9]*" --abbrev=0 HEAD 2>/dev/null); then
+          echo "previousversion=$(git describe --tags --match="[0-9]*" --abbrev=0 HEAD)" >> "$GITHUB_OUTPUT"
+        else
+          echo "previousversion=0.0.0" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Determine new version number (Standard)
+      if: needs.label.outputs.prerelease-type == ''
+      uses: actions/github-script@v7
+      id: new-version-standard
+      env:
+        PREV_VERSION: ${{ steps.prevtag.outputs.previousversion }}
+        RELEASE_TYPE: ${{ needs.label.outputs.release-type }}
+        PROVIDER_VERSION: ${{ needs.label.outputs.provider-version }}
+      with:
+        script: |
+          const script = require('./src/.github/scripts/pr-scripts/plan_new-version.js')
+          await script({github, context, core})
+
+  comment:
+    needs: label
+    if: needs.label.outputs.is-merge-event == 'false' && needs.label.outputs.release-type != 'no-release'
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: read
+    runs-on: ubuntu-latest
+    name: 'Comment on PR'
+    steps:
+      - name: Clone Repo to determine previous git tag
+        uses: actions/checkout@v4
+        with:
+          path: src
+          fetch-depth: 0
+      - uses: actions/github-script@v7
+        env:
+          releaseVersion: '${{ needs.label.outputs.release-version }}'
+          previousVersion: '${{ needs.label.outputs.previous-version }}'
+        with:
+          script: |
+            const script = require('./src/.github/scripts/pr-scripts/comment_pr-comment.js')
+            await script({github, context, core})
+
+  build:
+    runs-on: ubuntu-latest
+    needs: label
+    steps: 
     - name: Build image
       run: docker build --file Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}" .
 
-    - name: Get the latest release
-      id: get_latest_release
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const latestRelease = await github.repos.getLatestRelease({
-            owner: context.repo.owner,
-            repo: context.repo.repo
-          });
-          core.setOutput('tag_name', latestRelease.data.tag_name);
-
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
     - name: Log in to registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
@@ -40,18 +98,18 @@ jobs:
         IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
 
         echo IMAGE_ID=$IMAGE_ID
-        echo VERSION=${{ steps.get_latest_release.outputs.tag_name }}
+        echo VERSION=${{ needs.label.outputs.release-version }}
         docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
         docker push $IMAGE_ID:$VERSION
 
     - name: Update values.yaml
       run: |
         cd config
-        sed -i 's|APP_VERSION:.*|APP_VERSION: '${{  steps.get_latest_release.outputs.tag_name }}'|' event-buddy-values.yaml 
+        sed -i 's|APP_VERSION:.*|APP_VERSION: '${{ needs.label.outputs.release-version }}'|' event-buddy-values.yaml 
         git config --global user.name 'GitHub Actions'
-        git config --global user.email 'no-reply@github.com'
-        git add values.yaml
-        git commit -m "Update values.yaml"
+        git config --global user.email 'github-actions@users.noreply.github.com'
+        git add event-buddy-values.yaml
+        git commit -m "Update event-buddy-values.yaml"
         git push
 
     - name: Create Release
@@ -59,5 +117,5 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        title: Event Buddy Release - ${{ steps.get_latest_release.outputs.tag_name }}
-        tag: ${{ steps.get_latest_release.outputs.tag_name }}
+        title: Event Buddy Release - ${{ needs.label.outputs.release-version }}
+        tag: ${{ needs.label.outputs.release-version }}
