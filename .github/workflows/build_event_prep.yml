@@ -11,6 +11,9 @@ jobs:
     outputs:
       release-type: ${{ steps.parse-labels.outputs.release-type }}
       change-type: ${{ steps.parse-labels.outputs.change-type }}
+      previous-version: ${{ steps.prevtag.outputs.previousversion }}
+      release-version: ${{ steps.new-version-standard.outputs.new-version }}
+      changelog-content: ${{ steps.set-changelog.outputs.changelog }}
     permissions:
       issues: write
       pull-requests: write
@@ -44,12 +47,21 @@ jobs:
       id: new-version-standard
       env:
         PREV_VERSION: ${{ steps.prevtag.outputs.previousversion }}
-        RELEASE_TYPE: ${{ steps.label.outputs.release-type }}
+        RELEASE_TYPE: ${{ steps.parse-labels.outputs.release-type }}
       with:
         script: |
           const script = require('./src/.github/scripts/pr-scripts/plan_new-version.js')
           await script({github, context, core})
-
+    - name: Extract changelog entry
+      uses: actions/github-script@v7
+      id: set-changelog
+      env: 
+        releaseversion: ${{ steps.new-version-standard.outputs.new-version }}
+        changetype: ${{ steps.parse-labels.outputs.change-type }}
+      with:
+        script: |
+          const script = require('./src/.github/scripts/pr-scripts/plan_changelog.js')
+          await script({github, context, core})
   comment:
     needs: label
     if: needs.label.outputs.release-type != 'no-release'
@@ -125,7 +137,7 @@ jobs:
         run: |
           git config user.name "GitHub-Actions[bot]"
           git config user.email "GitHub-Actions[bot]@users.noreply.github.com"
-          sed -i 's|APP_VERSION:.*|APP_VERSION: '${{ needs.label.outputs.release-version }}'|' ./config/event-buddy-values.yaml 
+          sed -i 's|APP_VERSION:.*|APP_VERSION: '${{ needs.label.outputs.release-version }}'|' config/event-buddy-values.yaml 
           cp ${{ github.workspace }}/tmp/updated-changelog.md CHANGELOG.md
           cp ${{ github.workspace }}/tmp/new-README.md README.md
           git add CHANGELOG.md README.md config/event-buddy-values.yaml
