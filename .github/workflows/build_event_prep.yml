@@ -46,7 +46,7 @@ jobs:
       id: new-version-standard
       env:
         PREV_VERSION: ${{ steps.prevtag.outputs.previousversion }}
-        RELEASE_TYPE: ${{ steps.label.outputs.release-type }}
+        RELEASE_TYPE: ${{ steps.parse-labels.outputs.release-type }}
       with:
         script: |
           const script = require('./src/.github/scripts/pr-scripts/plan_new-version.js')
