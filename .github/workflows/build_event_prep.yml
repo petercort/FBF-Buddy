@@ -138,7 +138,7 @@ jobs:
         run: |
           git config user.name "GitHub-Actions[bot]"
           git config user.email "GitHub-Actions[bot]@users.noreply.github.com"
-          sed -i 's|APP_VERSION:.*|APP_VERSION: '${{ needs.label.outputs.release-version }}'|' config/event-buddy-values.yaml 
+          sed -i 's|${{ needs.label.outputs.previous-version }}|${{ needs.label.outputs.release-version }}|' config/event-buddy-deployment.yaml.yaml 
           cp ${{ github.workspace }}/tmp/updated-changelog.md CHANGELOG.md
           cp ${{ github.workspace }}/tmp/new-README.md README.md
           git add CHANGELOG.md README.md config/event-buddy-values.yaml
