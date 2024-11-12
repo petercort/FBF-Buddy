@@ -19,16 +19,6 @@ This section will automatically tag your Pull Request with appropriate labels. C
 - Major
 - Minor
 - Patch
-- Transition
-
-### (If Applicable) Specify Initial Provider Version
-
-<!--
-This section will automatically tag your Pull Request with appropriate labels to indicate that a provider version should be used, and store the version. If provider version is not needed, please keep `N/A`, else ensure provider version specified.
--->
-
-- N/A
-
 
 ## What type of change was made?
 

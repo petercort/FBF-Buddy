@@ -22,9 +22,8 @@ jobs:
     - name: Get release version
       id: release-version
       run: |
-        VERSION=$(awk '/APP_VERSION/{print $NF}' config/event-buddy-values.yaml)
-        echo "VERSION=$VERSION" >> $GITHUB_ENV
-        echo "VERSION=$VERSION"
+        VERSION=$(grep "$IMAGE_NAME:" config/${IMAGE_NAME}-deployment.yaml | awk -F: '{print $3}')
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
     - name: Build image
       run: docker build --file Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}" .
 
@@ -32,6 +31,8 @@ jobs:
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Push image
+      env: 
+        VERSION: ${{ steps.release-version.outputs.VERSION }}
       run: |
         IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
         IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
