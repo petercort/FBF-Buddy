@@ -22,7 +22,8 @@ jobs:
     - name: Get release version
       id: release-version
       run: |
-        VERSION=$(awk '/$IMAGE_NAME:/{print $NF}' config/event-buddy-deployment.yaml)
+        $(awk '/$IMAGE_NAME/{print $NF}' config/event-buddy-deployment.yaml)
+        VERSION=$(awk '/$IMAGE_NAME/{print $NF}' config/event-buddy-deployment.yaml)
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
     - name: Build image
       run: docker build --file Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}" .
