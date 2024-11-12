@@ -141,7 +141,7 @@ jobs:
           sed -i 's|${{ needs.label.outputs.previous-version }}|${{ needs.label.outputs.release-version }}|' config/event-buddy-deployment.yaml
           cp ${{ github.workspace }}/tmp/updated-changelog.md CHANGELOG.md
           cp ${{ github.workspace }}/tmp/new-README.md README.md
-          git add CHANGELOG.md README.md config/event-buddy-values.yaml
+          git add CHANGELOG.md README.md config/event-buddy-deployment.yaml
           if ! git diff-index --quiet HEAD; then
             git commit -m "Bot: Updating CHANGELOG and README for release based on #${{ github.event.pull_request.number }}"
             git push origin ${{ github.event.pull_request.head.ref }}
