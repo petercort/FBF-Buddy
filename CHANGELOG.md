@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 0.0.4
+
+#### bugfix
+* PR [#11](https://github.com/petercort/FBF-Event-Buddy/pull/11) - updating another thing
+
+
+
 ### Version 0.0.3
 
 #### enhancement

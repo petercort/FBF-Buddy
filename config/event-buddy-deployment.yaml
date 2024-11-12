@@ -14,10 +14,14 @@ spec:
         app: event-buddy
     spec:
       containers:
-      - image: ghcr.io/petercort/event-buddy:0.0.3
+      - image: ghcr.io/petercort/event-buddy:0.0.4
         name: event-buddy
         ports:
         - containerPort: 80
+      - command:
+        - tail
+        - "-f"
+        - /dev/null
       volumeMounts:
       - name: azure-secrets-store
         mountPath: "/mnt/secrets-store"

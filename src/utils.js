@@ -1,14 +1,16 @@
 import 'dotenv/config';
 
 export async function DiscordRequest(endpoint, options) {
+  const discordToken = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
   // append endpoint to root API URL
   const url = 'https://discord.com/api/v10/' + endpoint;
   // Stringify payloads
   if (options.body) options.body = JSON.stringify(options.body);
+
   // Use fetch to make requests
   const res = await fetch(url, {
     headers: {
-      Authorization: `Bot ${process.env.discordToken}`,
+      Authorization: `Bot ${discordToken}`,
       'Content-Type': 'application/json; charset=UTF-8',
       'User-Agent': 'DiscordBot (https://github.com/petercort/fbf-event-buddy, 1.0.0)',
     },

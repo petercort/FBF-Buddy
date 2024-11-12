@@ -2,7 +2,9 @@ const { REST, Routes } = require('discord.js');
 require('dotenv').config()
 const fs = require('node:fs');
 const path = require('node:path');
-const { appId, guildId, discordToken } = process.env;
+const discordToken = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
+const guildId = fs.readFileSync("/mnt/secrets-store/guildId", 'utf8');
+const appId = fs.readFileSync("/mnt/secrets-store/APPID", 'utf8');
 
 const commands = [];
 // Grab all the command folders from the commands directory you created earlier
