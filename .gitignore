@@ -134,3 +134,6 @@ dist
 
 # sqlite
 *.sqlite
+
+# Some secrety stuff
+argocd/secret_provider_class.yaml

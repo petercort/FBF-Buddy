@@ -8,7 +8,7 @@ export async function DiscordRequest(endpoint, options) {
   // Use fetch to make requests
   const res = await fetch(url, {
     headers: {
-      Authorization: `Bot ${process.env.DISCORD_TOKEN}`,
+      Authorization: `Bot ${process.env.discordToken}`,
       'Content-Type': 'application/json; charset=UTF-8',
       'User-Agent': 'DiscordBot (https://github.com/petercort/fbf-event-buddy, 1.0.0)',
     },

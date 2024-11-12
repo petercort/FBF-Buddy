@@ -1,7 +1,7 @@
 # Step 1: Specify the base image
 FROM node:20
 
-WORKDIR /usr/src
+WORKDIR /usr
 
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=package-lock.json,target=package-lock.json \
@@ -14,4 +14,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["node", "app.js"]
+CMD ["node", "src/app.js"]

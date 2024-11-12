@@ -6,7 +6,7 @@ require('dotenv').config()
 const { EventsTable } = require('./dbObjects.js');
 const { exec } = require('node:child_process');
 const { execute } = require('./commands/utility/create_event.js');
-const { DISCORD_TOKEN } = process.env;
+const { discordToken } = process.env;
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 
@@ -59,4 +59,4 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 });
 
-client.login(DISCORD_TOKEN);
+client.login(discordToken);
