@@ -18,10 +18,6 @@ spec:
         name: event-buddy
         ports:
         - containerPort: 80
-      - command:
-        - tail
-        - "-f"
-        - /dev/null
       volumeMounts:
       - name: azure-secrets-store
         mountPath: "/mnt/secrets-store"
