@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const discordToken = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
 const guildId = fs.readFileSync("/mnt/secrets-store/guildId", 'utf8');
-const appId = fs.readFileSync("/mnt/secrets-store/APPID", 'utf8');
+const appId = fs.readFileSync("/mnt/secrets-store/appId", 'utf8');
 
 const commands = [];
 // Grab all the command folders from the commands directory you created earlier

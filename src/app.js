@@ -6,14 +6,19 @@ require('dotenv').config()
 const { EventsTable } = require('./dbObjects.js');
 const { exec } = require('node:child_process');
 const { execute } = require('./commands/utility/create_event.js');
-const { discordToken } = process.env;
+const discordToken = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 
 // in events table we have 
 // name, description, location, link, registration_url, event_guide, discipline, date, distances
 
-
+try {
+  const discordToken2 = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
+  console.log(discordToken2);
+} catch (err) {
+  console.error(err);
+}
 
 client.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');
