@@ -12,6 +12,7 @@ const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
 
 for (const folder of commandFolders) {
+	console.log(`[INFO] Processing commands in folder: ${folder}`);
 	// Grab all the command files from the commands directory you created earlier
 	const commandsPath = path.join(foldersPath, folder);
 	const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
@@ -40,7 +41,10 @@ const rest = new REST().setToken(discordToken);
 			Routes.applicationGuildCommands(appId, guildId),
 			{ body: commands },
 		);
-
+		await rest.put(
+			Routes.applicationCommands(appId),
+			{ body: commands },
+		);
 		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
 	} catch (error) {
 		// And of course, make sure you catch and log any errors!

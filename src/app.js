@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
 const { Op } = require('sequelize');
-const { EventsTable } = require('./dbObjects.js');
+const { EventsTable, UsersTable, BikesTable } = require('./dbObjects.js');
 const { exec } = require('node:child_process');
 const { execute } = require('./commands/utility/create_event.js');
 const discordToken = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
@@ -31,6 +31,10 @@ for (const folder of commandFolders) {
 client.once(Events.ClientReady, readyClient => {
 	console.log('Syncing database...');
 	EventsTable.sync({ alter: true });
+	//UsersTable.sync({ alter: true, force: true });
+	UsersTable.sync();
+	//BikesTable.sync({ alter: true, force: true });
+	BikesTable.sync();
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 });
 
@@ -55,8 +59,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 });
 
-try {
-	client.login(discordToken);
-} catch (error) {
-	console.error(error);
-}
+// Start the Strava webhook server
+require('./strava_webhook.js');
+
+client.login(discordToken);

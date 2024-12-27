@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 1.0.0
+
+#### feature
+* PR [#17](https://github.com/petercort/FBF-Buddy/pull/17) - Add wax utilities
+
+
+
 ### Version 0.0.5
 
 #### feature

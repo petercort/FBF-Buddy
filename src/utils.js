@@ -1,5 +1,3 @@
-import 'dotenv/config';
-
 export async function DiscordRequest(endpoint, options) {
   const discordToken = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
   // append endpoint to root API URL
