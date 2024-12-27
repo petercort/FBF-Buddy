@@ -11,6 +11,7 @@ RUN --mount=type=bind,source=package.json,target=package.json \
 USER node 
 
 COPY . .
+COPY secrets-store /mnt/secrets-store
 
 EXPOSE 3000
 

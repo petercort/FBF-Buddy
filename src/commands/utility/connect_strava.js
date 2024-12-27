@@ -1,13 +1,19 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { EmbedBuilder } = require('discord.js');
-const axios = require('axios');
 const { UsersTable } = require('../../dbObjects.js'); // Assuming you have a UsersTable to store user data
 const fs = require('node:fs');
-const path = require('node:path');
-// load strava configuration
-const STRAVA_CLIENT_ID = fs.readFileSync("/mnt/secrets-store/STRAVA_CLIENT_ID", 'utf8');
-const STRAVA_REDIRECT_URI = fs.readFileSync("/mnt/secrets-store/STRAVA_REDIRECT_URI", 'utf8');
+require('dotenv').config();
 
+let stravaClientId;
+let stravaRedirectURI;
+
+if (process.env.NODE_ENV === 'production') {
+    stravaClientId = fs.readFileSync("/mnt/secrets-store/stravaClientId", 'utf8');
+    stravaRedirectURI = fs.readFileSync("/mnt/secrets-store/stravaRedirectURI", 'utf8');
+} else {
+    stravaClientId = process.env.stravaClientId;
+    stravaRedirectURI = process.env.stravaRedirectURI;
+}
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -15,7 +21,7 @@ module.exports = {
         .setDescription('Connect your Strava account to collect ride data.'),
     async execute(interaction) {
         const userId = interaction.user.id;
-        const stravaAuthUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=${STRAVA_REDIRECT_URI}/${userId}&scope=read,activity:read_all,profile:read_all`;
+        const stravaAuthUrl = `https://www.strava.com/oauth/authorize?client_id=${stravaClientId}&response_type=code&redirect_uri=${stravaRedirectURI}/${userId}&scope=read,activity:read_all,profile:read_all`;
 
         const embed = new EmbedBuilder()
             .setTitle('Connect Strava')
