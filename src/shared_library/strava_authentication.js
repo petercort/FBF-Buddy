@@ -4,20 +4,20 @@ const fs = require('node:fs');
 require('dotenv').config();
 
 let stravaClientId;
-let stravaClentSecret;
+let stravaClientSecret;
 
 if (process.env.NODE_ENV === 'production') {
     stravaClientId = fs.readFileSync("/mnt/secrets-store/stravaClientId", 'utf8');
-    stravaClentSecret = fs.readFileSync("/mnt/secrets-store/stravaClentSecret", 'utf8');
+    stravaClientSecret = fs.readFileSync("/mnt/secrets-store/stravaClientSecret", 'utf8');
 } else {
     stravaClientId = process.env.stravaClientId;
-    stravaClentSecret = process.env.stravaClentSecret;
+    stravaClientSecret = process.env.stravaClientSecret;
 }
 async function firstTimeAuth(userId, code){
     try {
         const response = await axios.post('https://www.strava.com/oauth/token', {
             client_id: stravaClientId,
-            client_secret: stravaClentSecret,
+            client_secret: stravaClientSecret,
             code: code,
             grant_type: 'authorization_code'
         });
@@ -43,7 +43,7 @@ async function getStravaAuthentication(userData) {
         console.log('Token is expired, refreshing...');
         const refreshTokenResponse = await axios.post('https://www.strava.com/oauth/token', {
             client_id: stravaClientId,
-            client_secret: stravaClentSecret,
+            client_secret: stravaClientSecret,
             grant_type: 'refresh_token',
             refresh_token: userData.refreshToken,
         });

@@ -8,7 +8,7 @@ require('dotenv').config();
 let discordToken;
 
 if (process.env.NODE_ENV === 'production'){ 
-	const discordToken = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
+	discordToken = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
 } else { 
 	discordToken = process.env.discordToken
 }

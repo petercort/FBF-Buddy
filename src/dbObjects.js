@@ -2,28 +2,11 @@ const { Sequelize } = require('sequelize');
 const fs = require('node:fs');
 
 require('dotenv').config();
-let usePostgres = true;
-let database;
-let username;
-let password;
-let host;
 let sequelize;
-let config;
+
 
 if (process.env.NODE_ENV === 'production') {
-	database = fs.readFileSync("/mnt/secrets-store/database", 'utf8')
-	username = fs.readFileSync("/mnt/secrets-store/username", 'utf8')
-	password = fs.readFileSync("/mnt/secrets-store/password", 'utf8')
-	host = fs.readFileSync("/mnt/secrets-store/host", 'utf8')
-	config = {
-		host: process.env.host,
-		dialect: 'sqlite',
-		logging: false,
-		storage: 'database.sqlite',
-	}
-	sequelize = new Sequelize(database, username, password, config);
-} else if (usePostgres) {
-	const databaseUrl = process.env.databaseUrl
+	const databaseUrl = fs.readFileSync("/mnt/secrets-store/databaseUrl", 'utf8')
 	const config = {
 		dialect: 'postgres',
 		ssl: {
@@ -33,10 +16,10 @@ if (process.env.NODE_ENV === 'production') {
 	}
 	sequelize = new Sequelize(databaseUrl, config)
 } else {
-	database = process.env.database
-	username = process.env.username
-	password = process.env.password
-	config = {
+	const database = process.env.database
+	const username = process.env.username
+	const password = process.env.password
+	const config = {
 		host: process.env.host,
 		dialect: 'sqlite',
 		logging: false,
