@@ -1,7 +1,7 @@
 module.exports = (sequelize, DataTypes) => {
 	return sequelize.define('users', {
         userId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING,
             primaryKey: true,
             Unique: true,
         },
