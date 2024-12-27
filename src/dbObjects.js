@@ -8,5 +8,6 @@ const sequelize = new Sequelize('database', 'username', 'password', {
 });
 
 const EventsTable = require('./models/events.js')(sequelize, Sequelize.DataTypes);
-
-module.exports = { EventsTable };
+const UsersTable = require('./models/users.js')(sequelize, Sequelize.DataTypes);
+const BikesTable = require('./models/bikes.js')(sequelize, Sequelize.DataTypes);
+module.exports = { EventsTable, UsersTable, BikesTable };
