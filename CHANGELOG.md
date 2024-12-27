@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 1.0.2
+
+#### bugfix
+* PR [#23](https://github.com/petercort/FBF-Buddy/pull/23) - updating data types
+
+
+
 ### Version 1.0.1
 
 #### bugfix
