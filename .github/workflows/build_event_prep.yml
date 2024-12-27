@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Generate Release Content
 
 on:
   pull_request:
@@ -127,16 +127,16 @@ jobs:
         run: |
           npm install js-yaml --save
           node .github/scripts/generate-readme.js
-      - name: Update package.json with version
-        working-directory: src
-        run: | 
-          sed -i 's/"version": "[^"]*"/"version": "${{ needs.label.outputs.release-version }}"/' package.json
       - name: Checkout Pull Request Branch Again
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
           path: src
+      - name: Update package.json with version
+        working-directory: src
+        run: | 
+          sed -i 's/"version": "[^"]*"/"version": "${{ needs.label.outputs.release-version }}"/' package.json
       - name: Commit and Push Updates
         working-directory: src
         run: |
