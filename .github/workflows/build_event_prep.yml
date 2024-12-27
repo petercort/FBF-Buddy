@@ -127,6 +127,10 @@ jobs:
         run: |
           npm install js-yaml --save
           node .github/scripts/generate-readme.js
+      - name: Update package.json with version
+        working-directory: src
+        run: | 
+          sed -i 's/"version": "[^"]*"/"version": "${{ needs.label.outputs.release-version }}"/' package.json
       - name: Checkout Pull Request Branch Again
         uses: actions/checkout@v4
         with:
@@ -140,8 +144,8 @@ jobs:
           git config user.email "GitHub-Actions[bot]@users.noreply.github.com"
           cp ${{ github.workspace }}/tmp/updated-changelog.md CHANGELOG.md
           cp ${{ github.workspace }}/tmp/new-README.md README.md
-          git add CHANGELOG.md README.md
+          git add CHANGELOG.md README.md package.json
           if ! git diff-index --quiet HEAD; then
-            git commit -m "Bot: Updating CHANGELOG and README for release based on #${{ github.event.pull_request.number }}"
+            git commit -m "Bot: Updating CHANGELOG, README and package.json for release based on #${{ github.event.pull_request.number }}"
             git push origin ${{ github.event.pull_request.head.ref }}
           fi
