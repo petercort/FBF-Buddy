@@ -1,17 +1,22 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
-const { Op } = require('sequelize');
 const { EventsTable, UsersTable, BikesTable } = require('./dbObjects.js');
-const { exec } = require('node:child_process');
-const { execute } = require('./commands/utility/create_event.js');
-const discordToken = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
+require('dotenv').config();
+
+// load configs 
+let discordToken;
+
+if (process.env.NODE_ENV === 'production'){ 
+	const discordToken = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
+} else { 
+	discordToken = process.env.discordToken
+}
+
+// Create the discord client and instantiate the commands collection
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-
 client.commands = new Collection();
-
 const foldersPath = path.join(__dirname, 'commands');
-
 const commandFolders = fs.readdirSync(foldersPath);
 
 for (const folder of commandFolders) {
@@ -28,6 +33,7 @@ for (const folder of commandFolders) {
 	}
 }
 
+// manage the sequelize connection
 client.once(Events.ClientReady, readyClient => {
 	console.log('Syncing database...');
 	EventsTable.sync({ alter: true });

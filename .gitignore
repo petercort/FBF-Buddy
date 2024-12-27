@@ -139,4 +139,6 @@ dist
 argocd/secret_provider_class.yaml
 argocd/pod.yaml
 
+secrets-store
+
 .gitignore

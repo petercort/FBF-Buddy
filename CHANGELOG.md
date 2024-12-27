@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 0.1.0
+
+#### enhancement
+* PR [#20](https://github.com/petercort/FBF-Buddy/pull/20) - updating!
+
+
+
 ### Version 1.0.0
 
 #### feature
