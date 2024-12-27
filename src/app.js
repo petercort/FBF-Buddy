@@ -9,7 +9,9 @@ const discordToken = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.commands = new Collection();
+
 const foldersPath = path.join(__dirname, 'commands');
+
 const commandFolders = fs.readdirSync(foldersPath);
 
 for (const folder of commandFolders) {
@@ -27,6 +29,7 @@ for (const folder of commandFolders) {
 }
 
 client.once(Events.ClientReady, readyClient => {
+	console.log('Syncing database...');
 	EventsTable.sync({ alter: true });
 	//UsersTable.sync({ alter: true, force: true });
 	UsersTable.sync();
@@ -56,7 +59,15 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 });
 
+<<<<<<< HEAD
 // Start the Strava webhook server
 require('./strava_webhook.js');
 
 client.login(discordToken);
+=======
+try {
+	client.login(discordToken);
+} catch (error) {
+	console.error(error);
+}
+>>>>>>> 5cb1fdf6d2eec9e256a8b8379201c7d14aded81d

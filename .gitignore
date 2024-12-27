@@ -137,3 +137,6 @@ dist
 
 # Some secrety stuff
 argocd/secret_provider_class.yaml
+argocd/pod.yaml
+
+.gitignore

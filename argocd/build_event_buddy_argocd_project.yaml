@@ -1,8 +1,0 @@
-project: fast-but-friendly
-source:
-  repoURL: https://github.com/petercort/FBF-Event-Buddy
-  path: config
-  targetRevision: '>=0.0.0-0'
-destination:
-  server: https://kubernetes.default.svc
-  namespace: fast-but-friendly
