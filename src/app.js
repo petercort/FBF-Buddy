@@ -6,7 +6,6 @@ const { EventsTable, UsersTable, BikesTable } = require('./dbObjects.js');
 const { exec } = require('node:child_process');
 const { execute } = require('./commands/utility/create_event.js');
 const discordToken = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
-
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.commands = new Collection();
