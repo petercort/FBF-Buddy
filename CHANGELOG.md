@@ -4,7 +4,7 @@
 ### Version 1.0.1
 
 #### bugfix
-* PR [#21](https://github.com/petercort/FBF-Buddy/pull/21) - Setup db connection
+* PR [#22](https://github.com/petercort/FBF-Buddy/pull/22) - Setup db connection
 
 
 
