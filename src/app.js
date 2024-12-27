@@ -59,15 +59,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 });
 
-<<<<<<< HEAD
 // Start the Strava webhook server
 require('./strava_webhook.js');
 
 client.login(discordToken);
-=======
-try {
-	client.login(discordToken);
-} catch (error) {
-	console.error(error);
-}
->>>>>>> 5cb1fdf6d2eec9e256a8b8379201c7d14aded81d
