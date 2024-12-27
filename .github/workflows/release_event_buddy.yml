@@ -22,7 +22,7 @@ jobs:
     - name: Get release version
       id: release-version
       run: |
-        VERSION=$(grep "$IMAGE_NAME:" config/${IMAGE_NAME}-deployment.yaml | awk -F: '{print $3}')
+        VERSION=$(grep -oP '"version":\s*"\K[^"]+' package.json)
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
     - name: Build image
       run: docker build --file Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}" .
