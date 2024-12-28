@@ -1,0 +1,27 @@
+name: Feature Request
+description: Request a new feature
+title: "[Feature]: "
+labels: ["feature", "triage"]
+assignees:
+  - petercort
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this feature report!
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+  - type: textarea
+    id: feature
+    attributes:
+      label: Feature?
+      description: What is the feature you'd like?
+      placeholder: Tell us about your desired feature!
+    validations:
+      required: true
