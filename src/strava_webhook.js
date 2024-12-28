@@ -7,8 +7,21 @@ const fs = require('node:fs');
 const { firstTimeAuth, getStravaAuthentication } = require('./shared_library/strava_authentication.js');
 const app = express();
 app.use(express.json());
-const discordToken = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
+require('dotenv').config()
+let discordToken;
+
+if (process.env.NODE_ENV === 'production') {
+	discordToken = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
+} else {
+	discordToken = process.env.discordToken;
+}
+
 client.login(discordToken);
+
+app.get('/', (req, res) => {
+    // send a 200 response to the root path
+    res.sendStatus(200);
+});
 
 app.post('/webhook', async (req, res) => {
     console.log("webhook event received!", req.body);
@@ -107,13 +120,16 @@ async function setupBikes(athleteId, userId, strava_access_token) {
         // get the athlete page 
         // Fetch details for each bike from Strava's /gear endpoint and update the database
         for (const bike of athleteResponse.data.bikes) {
+            const bikeData = await axios.get(`https://www.strava.com/api/v3/gear/${bike.id}`, {
+                headers: { Authorization: `Bearer ${strava_access_token}` }
+            });
             // Update the database with the bike details
             await BikesTable.upsert({
                 bikeId: bike.id,
                 userId: userId,
                 name: bike.name,
-                brand: bike.brand_name,
-                model: bike.model_name,
+                brand: bikeData.data.brand_name,
+                model: bikeData.data.model_name,
                 distance: bike.distance
             });
         }
