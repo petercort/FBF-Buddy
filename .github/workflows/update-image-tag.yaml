@@ -57,7 +57,7 @@ jobs:
           PR_QUERY=$(cat <<EOF
           mutation {
             createPullRequest(input: {
-              repositoryId: "$(gh api graphql -f query='query { repository(owner: "your-username", name: "fbf-event-buddy-config") { id } }' -q .data.repository.id)"
+              repositoryId: "$(gh api graphql -f query='query { repository(owner: "${{ github.repository_owner }}", name: "${{ secrets.deployment_repo }}") { id } }' -q .data.repository.id)"
               title: "Update image tag to $NEW_VERSION"
               headRefName: "$BRANCH_NAME"
               baseRefName: "main"
