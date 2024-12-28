@@ -21,24 +21,26 @@ jobs:
           private-key: ${{ secrets.PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
       - name: Checkout repository
-        uses: actions/checkout@v3
-
+        uses: actions/checkout@v4
       - name: Get new version
         id: get_version
         run: |
           NEW_VERSION=$(grep '^appVersion:' app.version | awk '{print $2}')
-          echo "::set-output name=new_version::$NEW_VERSION"
-
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+      - name: Checkout FBF Config Repo
+        uses: actions/checkout@v4
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        with: 
+          repository: ${{ github.repository_owner }}/${{ secrets.deployment_repo }} 
+          
       - name: Create new branch and update image tag
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        
         run: |
           NEW_VERSION=${{ steps.get_version.outputs.new_version }}
           BRANCH_NAME="release/${NEW_VERSION}"
-
-          # Clone the target repository
-          git clone https://github.com/petercort/fbf-event-buddy-config.git
-          cd fbf-event-buddy-config
 
           # Create a new branch
           git checkout -b $BRANCH_NAME
