@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 1.1.0
+
+#### bugfix
+* PR [#25](https://github.com/petercort/FBF-Buddy/pull/25) - updating the initial sync and healthchecks
+
+
+
 ### Version 1.0.2
 
 #### bugfix
