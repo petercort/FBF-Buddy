@@ -29,11 +29,9 @@ jobs:
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
       - name: Checkout FBF Config Repo
         uses: actions/checkout@v4
-        env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with: 
           repository: ${{ github.repository_owner }}/${{ secrets.deployment_repo }} 
-          
+          token:  ${{ steps.app-token.outputs.token }}
       - name: Create new branch and update image tag
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
