@@ -1,0 +1,75 @@
+name: Update Image Tag
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - app.version
+
+jobs:
+  update-image-tag:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get app token
+        uses: actions/create-github-app-token@v1.11.1 
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+          
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Get new version
+        if: steps.check_version.outputs.version_changed == 'true'
+        id: get_version
+        working-directory: event-buddy
+        run: |
+          NEW_VERSION=$(grep '^appVersion:' app.version | awk '{print $2}')
+          echo "::set-output name=new_version::$NEW_VERSION"
+
+      - name: Create new branch and update image tag
+        if: steps.check_version.outputs.version_changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          NEW_VERSION=${{ steps.get_version.outputs.new_version }}
+          BRANCH_NAME="release/${NEW_VERSION}"
+
+          # Clone the target repository
+          git clone https://github.com/petercort/fbf-event-buddy-config.git
+          cd fbf-event-buddy-config
+
+          # Create a new branch
+          git checkout -b $BRANCH_NAME
+
+          # Update the image.tag in values.yaml
+          sed "s/^appVersion: .*/appVersion: \"$new_version\"/" event-buddy/Chart.yaml
+
+          git add event-buddy/Chart.yaml
+          git commit -m "Update image tag to $NEW_VERSION"
+          git push origin $BRANCH_NAME
+
+          # Create a pull request using GitHub GraphQL API
+          PR_QUERY=$(cat <<EOF
+          mutation {
+            createPullRequest(input: {
+              repositoryId: "$(gh api graphql -f query='query { repository(owner: "your-username", name: "fbf-event-buddy-config") { id } }' -q .data.repository.id)"
+              title: "Update image tag to $NEW_VERSION"
+              headRefName: "$BRANCH_NAME"
+              baseRefName: "main"
+              body: "This PR updates the image tag to $NEW_VERSION."
+              maintainerCanModify: true
+            }) {
+              pullRequest {
+                url
+              }
+            }
+          }
+          EOF
+          )
+
+          gh api graphql -f query="$PR_QUERY"
