@@ -26,6 +26,7 @@ jobs:
         id: get_version
         run: |
           NEW_VERSION=$(grep '^appVersion:' app.version | awk '{print $2}')
+          echo $NEW_VERSION
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
       - name: Checkout FBF Config Repo
         uses: actions/checkout@v4
