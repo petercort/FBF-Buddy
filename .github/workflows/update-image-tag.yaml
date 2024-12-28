@@ -25,7 +25,6 @@ jobs:
 
       - name: Get new version
         id: get_version
-        working-directory: event-buddy
         run: |
           NEW_VERSION=$(grep '^appVersion:' app.version | awk '{print $2}')
           echo "::set-output name=new_version::$NEW_VERSION"
