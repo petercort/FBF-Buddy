@@ -53,9 +53,9 @@ async function getStravaAuthentication(userData) {
 
         // Update the user record with the new tokens
         await UsersTable.update({
-            stravaAccessToken: newAccessToken,
-            expiresAt: newExpiresAt,
-            refreshToken: newRefreshToken,
+            strava_access_token: newAccessToken,
+            strava_expires_at: newExpiresAt,
+            strava_refresh_token: newRefreshToken,
         }, {
             where: { userId: userData.userId }
         });

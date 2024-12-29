@@ -26,6 +26,7 @@ Changes should be made to the readme-template.yml file and the generate-readme.j
 
 ${config.readme.summary}
 
+${config.readme.commands}
 ## Known Issues
 ${config.readme.known_issues.map(issue => `- ${issue}`).join('\n')}
 
