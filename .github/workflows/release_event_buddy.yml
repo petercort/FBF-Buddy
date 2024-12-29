@@ -6,7 +6,7 @@ on:
       - main
       
 env:
-  IMAGE_NAME: event-buddy
+  IMAGE_NAME: fbf-buddy
 
 jobs:
   build:
@@ -22,7 +22,7 @@ jobs:
     - name: Get release version
       id: release-version
       run: |
-        VERSION=$(grep -oP '"version":\s*"\K[^"]+' package.json)
+        VERSION=$(cat app.version)
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
     - name: Build image
       run: docker build --file Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}" .
