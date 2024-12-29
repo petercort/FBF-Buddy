@@ -53,7 +53,7 @@ module.exports = {
         
 		try {
 			// equivalent to: INSERT INTO events (name, description, username) values (?, ?, ?);
-			const event = await EventsTable.update({
+		  await EventsTable.update({
 				description: eventDescription,
 				location: eventLocation,
 				link: eventLink,

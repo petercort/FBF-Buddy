@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 1.2.0
+
+#### bugfix
+* PR [#27](https://github.com/petercort/FBF-Buddy/pull/27) - adding linter and fixing a bunch of misc changed outlined in issue 24
+
+
+
 ### Version 1.1.1
 
 #### chore

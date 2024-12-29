@@ -1,8 +1,8 @@
 {
     "name": "fbf-buddy",
     "private": true,
-    "version": "1.1.1",
-    "description": "Discord app for cycling nerds!",
+    "version": "1.2.0",
+    "description": "Cycling event app for Discord",
     "main": "app.js",
     "engines": {
         "node": ">=20.x"
@@ -10,7 +10,8 @@
     "scripts": {
         "start": "NODE_ENV=production node src/app.js",
         "register": "node src/commands.js",
-        "dev": "nodemon src/app.js"
+        "dev": "nodemon src/app.js",
+        "lint": "eslint src/**/*.js"
     },
     "author": "Peter Cort",
     "license": "MIT",
@@ -26,6 +27,9 @@
         "sqlite3": "^5.1.7"
     },
     "devDependencies": {
+        "@eslint/js": "^9.17.0",
+        "eslint": "^9.17.0",
+        "globals": "^15.14.0",
         "nodemon": "^3.1.9"
     }
 }

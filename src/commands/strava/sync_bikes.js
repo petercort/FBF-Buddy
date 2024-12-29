@@ -10,6 +10,9 @@ module.exports = {
   async execute(interaction) {
       const userId = interaction.user.id;
       const user = await UsersTable.findOne({ where: { userId } });
+      if (!user) {
+        return await interaction.reply({content: 'Please connect your Strava using the /connect_strava command.', ephemeral: true });
+      }
       const strava_access_token = await getStravaAuthentication(user.dataValues);
       if (!strava_access_token) {
         return interaction.reply({ content: 'You need to connect your Strava account first.', ephemeral: true });
@@ -25,7 +28,7 @@ module.exports = {
           const bikes = response.data.bikes;
 
           if (bikes.length === 0) {
-              return await interaction.reply('No bikes found on Strava.');
+              return await interaction.reply({content: 'No bikes found on Strava.', ephemeral: true });
           }
           // Take the bike ID and call the gear/{id} endpoint to get the bike's name, brand, and model
           
@@ -49,14 +52,14 @@ module.exports = {
             updatedBikes.push(updatedData[0].dataValues);
           } catch (error) {
             console.error('Error fetching bike data:', error);
-            return await interaction.reply('There was an error fetching your bike data.');
+            return await interaction.reply({content: 'There was an error fetching your bike data.', ephemeral: true });
           }
         }
           const bikeList = updatedBikes.map(bike => `${bike.name} (${bike.brand} ${bike.model} ${Math.round(bike.distance *  0.000621371)})`).join('\n');
-          return await interaction.reply(`Your bikes have been synced:\n${bikeList}`);
+          return await interaction.reply({content: `Your bikes have been synced:\n${bikeList}`, ephemeral: true });
       } catch (error) {
           console.error('Error fetching or syncing bikes:', error);
-          return await interaction.reply('There was an error syncing your bikes.');
+          return await interaction.reply({content: 'There was an error syncing your bikes.', ephemeral: true });
       }
   },
 };
