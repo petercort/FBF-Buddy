@@ -4,15 +4,12 @@ const path = require('node:path');
 
 require('dotenv').config()
 let discordToken;
-let guildId;
 let appId;
 if (process.env.NODE_ENV === 'production') {
 	discordToken = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
- 	guildId = fs.readFileSync("/mnt/secrets-store/guildId", 'utf8');
 	appId = fs.readFileSync("/mnt/secrets-store/appId", 'utf8');
 } else {
 	discordToken = process.env.discordToken;
-	guildId = process.env.guildId;
 	appId = process.env.appId;
 }
 

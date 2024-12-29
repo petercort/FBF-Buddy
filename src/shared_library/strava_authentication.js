@@ -36,16 +36,15 @@ async function firstTimeAuth(userId, code){
     }
 }
 async function getStravaAuthentication(userData) {
-    const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
-
-    if (userData.expiresAt <= currentTime) {
+    const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds because Strava uses seconds for token expiry
+    if (userData.strava_expires_at <= currentTime) {
         // Token is expired, refresh it
         console.log('Token is expired, refreshing...');
         const refreshTokenResponse = await axios.post('https://www.strava.com/oauth/token', {
             client_id: stravaClientId,
             client_secret: stravaClientSecret,
             grant_type: 'refresh_token',
-            refresh_token: userData.refreshToken,
+            refresh_token: userData.strava_refresh_token,
         });
 
         const newAccessToken = refreshTokenResponse.data.access_token;
@@ -60,7 +59,7 @@ async function getStravaAuthentication(userData) {
         }, {
             where: { userId: userData.userId }
         });
-
+        console.log('Token refreshed successfully!');
         return newAccessToken;
     } else {
         console.log('Token is still valid...');

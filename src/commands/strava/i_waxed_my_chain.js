@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { BikesTable } = require('../../dbObjects.js');
+const { BikesTable, UsersTable } = require('../../dbObjects.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -19,6 +19,16 @@ module.exports = {
                 .setRequired(false)),
     async execute(interaction) {
         const userId = interaction.user.id;
+        // look up if the user is in the database
+        try {
+            const user = await UsersTable.findOne({ where: { userId } });
+            if (!user) {
+                return await interaction.reply({content: 'Please connect your Strava using the /connect_strava command.', ephemeral: true });
+            }
+        } catch (error) {
+            console.error('Error fetching user:', error);
+            return await interaction.reply({content: 'There was an error querying data, please check back in a bit.', ephemeral: true });
+        }
         const bikeName = interaction.options.getString('bike_name');
         // if date is null use today
         let date = interaction.options.getString('date')
@@ -38,12 +48,12 @@ module.exports = {
         }
         
         try {
-            const output = await BikesTable.update(
+            await BikesTable.update(
                 { lastWaxedDate: date, lastWaxedDistance: mileage},
                 { where: { userId: userId, bikeId: bike.bikeId } }
             );
             const distanceMiles = Math.round(mileage * 0.000621371192);
-            await interaction.reply({ content: `Successfully updated the last waxed date for bike ID ${bike.bikeId} to ${date}, at ${distanceMiles} miles.`});
+            await interaction.reply({ content: `Successfully updated the last waxed date for ${bike.name} to ${date}, at ${distanceMiles} miles.`, ephemeral: true });
         } catch (error) {
             console.error('Error updating waxed chain date:', error);
             await interaction.reply({ content: 'There was an error updating the waxed chain date.', ephemeral: true });
