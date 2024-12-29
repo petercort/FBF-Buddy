@@ -1,8 +1,8 @@
 {
-    "name": "fbf-event-buddy",
+    "name": "fbf-buddy",
     "private": true,
-    "version": "1.1.0",
-    "description": "Cycling event app for Discord",
+    "version": "1.1.1",
+    "description": "Discord app for cycling nerds!",
     "main": "app.js",
     "engines": {
         "node": ">=20.x"

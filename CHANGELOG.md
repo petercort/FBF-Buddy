@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 1.1.1
+
+#### chore
+* PR [#26](https://github.com/petercort/FBF-Buddy/pull/26) - Update package.json
+
+
+
 ### Version 1.1.0
 
 #### bugfix
