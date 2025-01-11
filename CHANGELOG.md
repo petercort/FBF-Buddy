@@ -1,6 +1,20 @@
 # Changelog
 
 
+### Version 1.3.0
+
+#### chore
+* PR [#31](https://github.com/petercort/FBF-Buddy/pull/31) - updating the webhook with more verboseness
+
+
+
+### Version 1.2.1
+
+#### bugfix
+* PR [#28](https://github.com/petercort/FBF-Buddy/pull/28) - Update refresh flow
+
+
+
 ### Version 1.2.0
 
 #### bugfix
