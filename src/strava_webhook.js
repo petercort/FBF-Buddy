@@ -73,8 +73,9 @@ app.post('/webhook', async (req, res) => {
 
 // Adds support for GET requests to our webhook
 app.get('/webhook', (req, res) => {
-    // Your verify token. Should be a random string.
-    const VERIFY_TOKEN = "STRAVA";
+    console.log('GET request received');
+    // Your verify token. Should be a random string. should really hide this
+    const VERIFY_TOKEN = "spBoS8Zx9oSwZTaW";
     // Parses the query params
     let mode = req.query['hub.mode'];
     let token = req.query['hub.verify_token'];
@@ -90,6 +91,9 @@ app.get('/webhook', (req, res) => {
         // Responds with '403 Forbidden' if verify tokens do not match
         res.sendStatus(403);      
       }
+    } else {
+        console.log("No token or mode found in query string");
+        res.status(500).send('No token or mode found in query string');
     }
   });
 
