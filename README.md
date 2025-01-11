@@ -16,7 +16,6 @@ A discord app that helps with random tasks in the FBF discord!
 | /i_waxed_my_chain | bike_name (req) date (optional) mileage (optional) | Updated the last_waxed field on the app. With no optional params passed it will update to the current date and mileage. | /i_waxed_my_chain bike_name: Joe date: 12/24/2024 mileage: 355 | If successful, returns the date and mileage in the system for a last wax, otherwise returns an error. | 
 | /get_last_ride | none | Returns the last ride you did according to Strava | /get_last_ride | Returns info on the last ride you did. |
 
-
 ## Known Issues
 - No known issues
 
