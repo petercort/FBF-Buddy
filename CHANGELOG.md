@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 1.3.1
+
+#### bugfix
+* PR [#32](https://github.com/petercort/FBF-Buddy/pull/32) - updating the typecasting on the webhook ownerid
+
+
+
 ### Version 1.3.0
 
 #### chore
