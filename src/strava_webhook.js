@@ -33,7 +33,8 @@ app.post('/webhook', async (req, res) => {
     const event = req.body;
     
     if (event.object_type === 'activity' && event.aspect_type === 'create') {
-        const user = await UsersTable.findOne({ where: { strava_user_id: event.owner_id } });
+        const ownerIdString = event.owner_id.toString();
+        const user = await UsersTable.findOne({ where: { strava_user_id: ownerIdString } });
         if (user) {
             const stravaAccessToken = await getStravaAuthentication(user.dataValues)
             try {
