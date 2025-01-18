@@ -30,7 +30,7 @@ jobs:
       with:
         script: |
           console.log(context.actor)
-          if (context.actor == 'dependabot'){
+          if (context.actor == 'dependabot[bot]'){
             core.setOutput('release-type', 'chore')
             core.setOutput('change-type', 'semver:patch')
           } else {
