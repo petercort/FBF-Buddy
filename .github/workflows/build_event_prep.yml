@@ -30,8 +30,8 @@ jobs:
       with:
         script: |
           if (context.actor == 'dependabot'){
-            core.setOutput('release-type': 'chore')
-            core.setOutput('change-type': 'semver:patch')
+            core.setOutput('release-type', 'chore')
+            core.setOutput('change-type', 'semver:patch')
           } else {
             const script = require('./src/.github/scripts/pr-scripts/parse-add-labels.js')
             await script({github, context, core})
