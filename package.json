@@ -16,7 +16,7 @@
     "author": "Peter Cort",
     "license": "MIT",
     "dependencies": {
-        "@sequelize/postgres": "^7.0.0-alpha.43",
+        "@sequelize/postgres": "^7.0.0-alpha.46",
         "axios": "^1.7.9",
         "discord-interactions": "^4.0.0",
         "discord.js": "^14.17.3",
