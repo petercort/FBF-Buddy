@@ -1,13 +1,13 @@
-const fs = require('fs');
-const yaml = require('js-yaml');
-const path = require('path');
+import { readFileSync, writeFileSync } from 'fs';
+import { load } from 'js-yaml';
+import { join } from 'path';
 
-const configPath = path.join(__dirname, '../../readme-template.yml');
-const readmePath = path.join(process.env.GITHUB_WORKSPACE, 'tmp/new-README.md');
-const changelogPath = path.join(process.env.GITHUB_WORKSPACE, 'tmp/updated-changelog.md');
+const configPath = join(__dirname, '../../readme-template.yml');
+const readmePath = join(process.env.GITHUB_WORKSPACE, 'tmp/new-README.md');
+const changelogPath = join(process.env.GITHUB_WORKSPACE, 'tmp/updated-changelog.md');
 
-const config = yaml.load(fs.readFileSync(configPath, 'utf-8'));
-let changelogContent = changelogPath ? fs.readFileSync(changelogPath, 'utf-8') : '';
+const config = load(readFileSync(configPath, 'utf-8'));
+let changelogContent = changelogPath ? readFileSync(changelogPath, 'utf-8') : '';
 
 // Process changelogContent to remove the first line and add "## Changelog"
 if (changelogContent) {
@@ -34,4 +34,4 @@ ${config.readme.known_issues.map(issue => `- ${issue}`).join('\n')}
 ${config.readme.owner_maintainers.map(owner => `- ${owner}`).join('\n')}
 `;
 
-fs.writeFileSync(readmePath, readmeContent.trim(), 'utf-8');
+writeFileSync(readmePath, readmeContent.trim(), 'utf-8');
