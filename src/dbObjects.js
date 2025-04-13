@@ -1,12 +1,16 @@
-const { Sequelize } = require('sequelize');
-const fs = require('node:fs');
+import { Sequelize } from 'sequelize';
+import { readFileSync } from 'node:fs';
+import dotenv from 'dotenv';
+dotenv.config();
 
-require('dotenv').config();
+import EventsModel from './models/events.js';
+import UsersModel from './models/users.js';
+import BikesModel from './models/bikes.js';
+
 let sequelize;
 
-
 if (process.env.NODE_ENV === 'production') {
-	const databaseUrl = fs.readFileSync("/mnt/secrets-store/databaseUrl", 'utf8')
+	const databaseUrl = readFileSync("/mnt/secrets-store/databaseUrl", 'utf8')
 	const config = {
 		dialect: 'postgres',
 		ssl: {
@@ -38,8 +42,7 @@ sequelize.authenticate()
 	console.error('Unable to connect to the database:', err);
 });
 
-
-const EventsTable = require('./models/events.js')(sequelize, Sequelize.DataTypes);
-const UsersTable = require('./models/users.js')(sequelize, Sequelize.DataTypes);
-const BikesTable = require('./models/bikes.js')(sequelize, Sequelize.DataTypes);
-module.exports = { EventsTable, UsersTable, BikesTable };
+const EventsTable = EventsModel(sequelize, Sequelize.DataTypes);
+const UsersTable = UsersModel(sequelize, Sequelize.DataTypes);
+const BikesTable = BikesModel(sequelize, Sequelize.DataTypes);
+export { UsersTable, BikesTable };
