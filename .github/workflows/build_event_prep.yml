@@ -34,7 +34,7 @@ jobs:
             core.setOutput('release-type', 'chore')
             core.setOutput('change-type', 'semver:patch')
           } else {
-            const script = require('./src/.github/scripts/pr-scripts/parse-add-labels.js')
+            const { default: script } = await import('${{ github.workspace}}/src/.github/scripts/pr-scripts/parse-add-labels.js')
             await script({github, context, core})
           }
     - name: Detect previous version number
