@@ -1,8 +1,6 @@
-module.exports = async ({github, context, core}) => {
+export default async ({github, context}) => {
     const { owner, repo } = context.repo;
     const { number: issue_number } = context.issue;
-    const { readdir, readFile } = require('fs').promises;
-    const utf8 = { encoding: 'utf-8' };
     const {previousVersion, releaseVersion, changelogContent} = process.env;
     const lines = [
       '# Release plan', '',

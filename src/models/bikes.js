@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
 	return sequelize.define('bikes', {
     bikeId: {
         type: DataTypes.STRING,
