@@ -1,17 +1,20 @@
-# Step 1: Specify the base image
+# Use the official Node.js image as the base image
 FROM node:23-slim
 
-WORKDIR /usr
+# Set the working directory
+WORKDIR /usr/src/app
 
-RUN --mount=type=bind,source=package.json,target=package.json \
-    --mount=type=bind,source=package-lock.json,target=package-lock.json \
-    --mount=type=cache,target=/root/.npm \
-    npm ci --omit=dev
+# Copy package.json and package-lock.json
+COPY package.json package-lock.json ./
 
-USER node 
+# Install dependencies
+RUN npm ci --omit=dev
 
+# Copy the rest of the application code
 COPY . .
 
+# Expose the application port
 EXPOSE 3000
 
-CMD ["npm", "start"]
+# Define the command to run the application
+CMD ["node", "src/app.js"]

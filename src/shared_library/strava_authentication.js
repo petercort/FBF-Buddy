@@ -1,14 +1,15 @@
-const axios = require('axios');
-const { UsersTable } = require('../dbObjects.js');
-const fs = require('node:fs');
-require('dotenv').config();
+import axios from 'axios';
+import { UsersTable } from '../dbObjects.js';
+import { readFileSync } from 'node:fs';
+import dotenv from 'dotenv';
+dotenv.config();
 
 let stravaClientId;
 let stravaClientSecret;
 
 if (process.env.NODE_ENV === 'production') {
-    stravaClientId = fs.readFileSync("/mnt/secrets-store/stravaClientId", 'utf8');
-    stravaClientSecret = fs.readFileSync("/mnt/secrets-store/stravaClientSecret", 'utf8');
+    stravaClientId = readFileSync("/mnt/secrets-store/stravaClientId", 'utf8');
+    stravaClientSecret = readFileSync("/mnt/secrets-store/stravaClientSecret", 'utf8');
 } else {
     stravaClientId = process.env.stravaClientId;
     stravaClientSecret = process.env.stravaClientSecret;
@@ -67,4 +68,4 @@ async function getStravaAuthentication(userData) {
     }
   }
 
-module.exports = {getStravaAuthentication, firstTimeAuth};
+export {getStravaAuthentication, firstTimeAuth};

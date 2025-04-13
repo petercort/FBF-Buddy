@@ -1,17 +1,18 @@
-const express = require('express');
-const { UsersTable, BikesTable } = require('./dbObjects.js'); 
-const axios = require('axios');
-const { Client, GatewayIntentBits } = require('discord.js');
+import express, { json } from 'express';
+import { UsersTable, BikesTable } from './dbObjects.js';
+import axios from 'axios';
+import { Client, GatewayIntentBits } from 'discord.js';
 const client = new Client({ intents: [GatewayIntentBits.Guilds]  });
-const fs = require('node:fs');
-const { firstTimeAuth, getStravaAuthentication } = require('./shared_library/strava_authentication.js');
+import { readFileSync } from 'node:fs';
+import { firstTimeAuth, getStravaAuthentication } from './shared_library/strava_authentication.js';
 const app = express();
-app.use(express.json());
-require('dotenv').config()
+app.use(json());
+import dotenv from 'dotenv';
+dotenv.config();
 let discordToken;
 
 if (process.env.NODE_ENV === 'production') {
-	discordToken = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
+	discordToken = readFileSync("/mnt/secrets-store/discordToken", 'utf8');
 } else {
 	discordToken = process.env.discordToken;
 }
