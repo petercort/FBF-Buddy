@@ -1,4 +1,4 @@
-export default ({core}) => {
+export default async ({core}) => {
     const { PREV_VERSION, RELEASE_TYPE } = process.env;
     console.log('Previous version was', PREV_VERSION);
     console.log('Release type is', RELEASE_TYPE);
