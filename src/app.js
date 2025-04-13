@@ -1,14 +1,21 @@
-const fs = require('node:fs');
-const path = require('node:path');
-const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
-const { EventsTable, UsersTable, BikesTable } = require('./dbObjects.js');
-require('dotenv').config();
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
+import { UsersTable, BikesTable } from './dbObjects.js';
+import dotenv from 'dotenv';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+dotenv.config();
+
+// Define __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = join(__filename, '..');
 
 // load configs 
 let discordToken;
 
 if (process.env.NODE_ENV === 'production'){ 
-	discordToken = fs.readFileSync("/mnt/secrets-store/discordToken", 'utf8');
+	discordToken = readFileSync("/mnt/secrets-store/discordToken", 'utf8');
 } else { 
 	discordToken = process.env.discordToken
 }
@@ -16,15 +23,15 @@ if (process.env.NODE_ENV === 'production'){
 // Create the discord client and instantiate the commands collection
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.commands = new Collection();
-const foldersPath = path.join(__dirname, 'commands');
-const commandFolders = fs.readdirSync(foldersPath);
+const foldersPath = join(__dirname, 'commands');
+const commandFolders = readdirSync(foldersPath);
 
 for (const folder of commandFolders) {
-	const commandsPath = path.join(foldersPath, folder);
-	const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+	const commandsPath = join(foldersPath, folder);
+	const commandFiles = readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 	for (const file of commandFiles) {
-		const filePath = path.join(commandsPath, file);
-		const command = require(filePath);
+		const filePath = join(commandsPath, file);
+		const command = await import(pathToFileURL(filePath).href);
 		if ('data' in command && 'execute' in command) {
 			client.commands.set(command.data.name, command);
 		} else {
@@ -36,7 +43,6 @@ for (const folder of commandFolders) {
 // manage the sequelize connection
 client.once(Events.ClientReady, readyClient => {
 	console.log('Syncing database...');
-	EventsTable.sync({ alter: true });
 	//UsersTable.sync({ alter: true, force: true });
 	UsersTable.sync();
 	//BikesTable.sync({ alter: true, force: true });
@@ -66,6 +72,6 @@ client.on(Events.InteractionCreate, async interaction => {
 });
 
 // Start the Strava webhook server
-require('./strava_webhook.js');
+import './strava_webhook.js';
 
 client.login(discordToken);

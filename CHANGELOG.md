@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 1.3.2
+
+#### bugfix
+* PR [#69](https://github.com/petercort/FBF-Buddy/pull/69) - updating some docker and dependencies nad moving to esmodules cause t…
+
+
+
 ### Version 1.4.0
 
 #### enhancement
