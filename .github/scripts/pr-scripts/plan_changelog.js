@@ -1,4 +1,4 @@
-export default async ({github, context, core}) => {
+module.exports = async ({github, context, core}) => {
     const { owner, repo } = context.repo;
     const { data: prInfo } = await github.rest.pulls.get({
       owner, repo,
