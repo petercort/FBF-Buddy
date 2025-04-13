@@ -1,4 +1,4 @@
-module.exports = async ({github, context}) => {
+export default async ({github, context}) => {
     const { owner, repo } = context.repo;
     const { number: issue_number } = context.issue;
     const {previousVersion, releaseVersion, changelogContent} = process.env;
