@@ -19,7 +19,7 @@
         "@sequelize/postgres": "^7.0.0-alpha.43",
         "axios": "^1.7.9",
         "discord-interactions": "^4.0.0",
-        "discord.js": "^14.17.3",
+        "discord.js": "^14.18.0",
         "dotenv": "^16.4.7",
         "express": "^4.18.2",
         "fbf-buddy": "file:",
