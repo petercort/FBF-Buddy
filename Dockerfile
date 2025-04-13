@@ -1,5 +1,5 @@
 # Step 1: Specify the base image
-FROM node:20
+FROM node:23-slim
 
 WORKDIR /usr
 

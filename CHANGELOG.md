@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 1.4.0
+
+#### enhancement
+* PR [#68](https://github.com/petercort/FBF-Buddy/pull/68) - updating the workflows for latest tags and adding some test
+
+
+
 ### Version 1.3.1
 
 #### bugfix
