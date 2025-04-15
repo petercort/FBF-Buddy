@@ -13,7 +13,6 @@ if (process.env.NODE_ENV === 'production') {
 	appId = process.env.appId;
 }
 
-
 const commands = [];
 // Grab all the command folders from the commands directory you created earlier
 const foldersPath = join(__dirname, 'commands');

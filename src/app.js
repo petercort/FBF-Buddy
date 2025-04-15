@@ -4,6 +4,8 @@ import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 import { UsersTable, BikesTable } from './dbObjects.js';
 import dotenv from 'dotenv';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { SecretClient } from '@azure/keyvault-secrets';
+import { DefaultAzureCredential } from '@azure/identity';
 
 dotenv.config();
 
@@ -13,11 +15,25 @@ const __dirname = join(__filename, '..');
 
 // load configs 
 let discordToken;
+let azureClient; 
 
-if (process.env.NODE_ENV === 'production'){ 
-	discordToken = readFileSync("/mnt/secrets-store/discordToken", 'utf8');
-} else { 
-	discordToken = process.env.discordToken
+if (process.env.NODE_ENV === 'production') {
+	const keyVaultName = process.env.KEY_VAULT_NAME;
+	const keyVaultUrl = `https://${keyVaultName}.vault.azure.net`;
+	const credential = new DefaultAzureCredential();
+	azureClient = new SecretClient(keyVaultUrl, credential);
+} else {
+	const keyVaultName = process.env.KEY_VAULT_NAME;
+	const keyVaultUrl = `https://${keyVaultName}.vault.azure.net`;
+	const credential = new DefaultAzureCredential();
+	azureClient = new SecretClient(keyVaultUrl, credential);
+}
+
+try {
+	discordToken = (await azureClient.getSecret('discordToken')).value;
+} catch (error) {
+	console.error('Error retrieving secret from Azure Key Vault:', error);
+	process.exit(1);
 }
 
 // Create the discord client and instantiate the commands collection

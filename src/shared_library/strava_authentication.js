@@ -1,19 +1,15 @@
 import axios from 'axios';
 import { UsersTable } from '../dbObjects.js';
-import { readFileSync } from 'node:fs';
-import dotenv from 'dotenv';
-dotenv.config();
+import { getAzureSecretsClient } from './azure_secrets.js';
 
 let stravaClientId;
 let stravaClientSecret;
 
-if (process.env.NODE_ENV === 'production') {
-    stravaClientId = readFileSync("/mnt/secrets-store/stravaClientId", 'utf8');
-    stravaClientSecret = readFileSync("/mnt/secrets-store/stravaClientSecret", 'utf8');
-} else {
-    stravaClientId = process.env.stravaClientId;
-    stravaClientSecret = process.env.stravaClientSecret;
-}
+// call the azure_secrets.js to get the secrets
+const azureClient = await getAzureSecretsClient();
+stravaClientId = (await azureClient.getSecret('stravaClientId')).value;
+stravaClientSecret = (await azureClient.getSecret('stravaClientSecret')).value;
+
 async function firstTimeAuth(userId, code){
     try {
         const response = await axios.post('https://www.strava.com/oauth/token', {
