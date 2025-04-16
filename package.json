@@ -11,12 +11,14 @@
     "scripts": {
         "start": "NODE_ENV=production node src/app.js",
         "register": "node src/commands.js",
-        "dev": "nodemon src/app.js",
+        "dev": "NODE_ENV=development nodemon src/app.js",
         "lint": "eslint src/**/*.js"
     },
     "author": "Peter Cort",
     "license": "MIT",
     "dependencies": {
+        "@azure/identity": "^4.8.0",
+        "@azure/keyvault-secrets": "^4.9.0",
         "@sequelize/postgres": "^7.0.0-alpha.43",
         "axios": "^1.7.9",
         "discord-interactions": "^4.0.0",
