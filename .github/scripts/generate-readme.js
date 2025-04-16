@@ -1,9 +1,10 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { load } from 'js-yaml';
-import { join } from 'path';
+import { dirname } from 'path';
 
 export default function script() {
-
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
   const configPath = join(__dirname, '../../readme-template.yml');
   const readmePath = join(process.env.GITHUB_WORKSPACE, 'tmp/new-README.md');
   const changelogPath = join(process.env.GITHUB_WORKSPACE, 'tmp/updated-changelog.md');
@@ -36,4 +37,5 @@ export default function script() {
   ${config.readme.owner_maintainers.map(owner => `- ${owner}`).join('\n')}
   `;
 
-  writeFileSync(readmePath, readmeContent.trim(), 'utf-8');
+  writeFileSync(readmePath, readmeContent.trim(), 'utf-8')
+};
