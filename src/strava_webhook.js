@@ -5,17 +5,17 @@ import { Client, GatewayIntentBits } from 'discord.js';
 const client = new Client({ intents: [GatewayIntentBits.Guilds]  });
 import { readFileSync } from 'node:fs';
 import { firstTimeAuth, getStravaAuthentication } from './shared_library/strava_authentication.js';
+import { getAzureSecretsClient } from './shared_library/azure_secrets.js';
 const app = express();
 app.use(json());
-import dotenv from 'dotenv';
-dotenv.config();
+
+
 let discordToken;
 
-if (process.env.NODE_ENV === 'production') {
-	discordToken = readFileSync("/mnt/secrets-store/discordToken", 'utf8');
-} else {
-	discordToken = process.env.discordToken;
-}
+// call the azure_secrets.js to get the secrets
+const azureClient = await getAzureSecretsClient();
+discordToken = (await azureClient.getSecret('discordToken')).value;
+
 
 client.login(discordToken);
 
