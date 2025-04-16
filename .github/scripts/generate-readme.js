@@ -37,4 +37,3 @@ export default function script() {
   `;
 
   writeFileSync(readmePath, readmeContent.trim(), 'utf-8');
-}
