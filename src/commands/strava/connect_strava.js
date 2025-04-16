@@ -1,20 +1,15 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { EmbedBuilder } from 'discord.js';
 import { UsersTable } from '../../dbObjects.js'; // Assuming you have a UsersTable to store user data
-import { readFileSync } from 'node:fs';
-import dotenv from 'dotenv';
-dotenv.config();
+import { getAzureSecretsClient } from '../../shared_library/azure_secrets.js';
 
 let stravaClientId;
-let stravaRedirectUri;
+let stravaClientSecret;
 
-if (process.env.NODE_ENV === 'production') {
-    stravaClientId = readFileSync("/mnt/secrets-store/stravaClientId", 'utf8');
-    stravaRedirectUri = readFileSync("/mnt/secrets-store/stravaRedirectUri", 'utf8');
-} else {
-    stravaClientId = process.env.stravaClientId;
-    stravaRedirectUri = process.env.stravaRedirectUri;
-}
+// call the azure_secrets.js to get the secrets
+const azureClient = await getAzureSecretsClient();
+stravaClientId = (await azureClient.getSecret('stravaClientId')).value;
+stravaClientSecret = (await azureClient.getSecret('stravaClientSecret')).value;
 
 export const data = new SlashCommandBuilder()
     .setName('connect_strava')

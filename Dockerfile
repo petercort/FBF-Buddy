@@ -3,8 +3,13 @@ FROM node:23-slim
 
 # Define an environment variable for the secret
 ARG KEY_VAULT_NAME
+ARG AZURE_CLIENT_ID
+ARG AZURE_TENANT_ID
+ARG AZURE_CLIENT_SECRET
 
-# Pass the secret as an environment variable
+ENV AZURE_CLIENT_ID=$AZURE_CLIENT_ID
+ENV AZURE_TENANT_ID=$AZURE_TENANT_ID
+ENV AZURE_CLIENT_SECRET=$AZURE_CLIENT_SECRET
 ENV KEY_VAULT_NAME=$KEY_VAULT_NAME
 
 # Set the working directory
@@ -23,4 +28,4 @@ COPY . .
 EXPOSE 3000
 
 # Define the command to run the application
-CMD ["node", "src/app.js"]
+CMD ["npm", "run", "start"]
