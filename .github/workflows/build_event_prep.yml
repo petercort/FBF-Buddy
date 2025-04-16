@@ -131,7 +131,7 @@ jobs:
         working-directory: src
         run: |
           npm install js-yaml --save
-          node .github/scripts/generate-readme.js
+          node .github/scripts/generate-readme.cjs
       - name: Checkout Pull Request Branch Again
         uses: actions/checkout@v4
         with:
