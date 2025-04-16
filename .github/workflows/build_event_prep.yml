@@ -127,11 +127,17 @@ jobs:
           echo "" >> updated-changelog.md
           printf "${{ needs.label.outputs.changelog-content }}" >> updated-changelog.md
           printf "${{ steps.fetch-release-notes.outputs.existing-changelog }}" | sed '1d' >> updated-changelog.md
-      - name: Generate Readme Content
+      - name: Install js-yaml
         working-directory: src
         run: |
           npm install js-yaml --save
-          node .github/scripts/generate-readme.cjs
+      - name: Generate README content
+        uses: actions/github-script@v7
+        with: 
+          script: |
+            const { default: script } = await import('${{ github.workspace }}/src/.github/scripts/generate-readme.js')
+
+            await script()
       - name: Checkout Pull Request Branch Again
         uses: actions/checkout@v4
         with:
