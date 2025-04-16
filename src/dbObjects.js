@@ -1,16 +1,14 @@
 import { Sequelize } from 'sequelize';
-import { readFileSync } from 'node:fs';
-import dotenv from 'dotenv';
-dotenv.config();
+import { getAzureSecretsClient } from './shared_library/azure_secrets.js';
 
-import EventsModel from './models/events.js';
 import UsersModel from './models/users.js';
 import BikesModel from './models/bikes.js';
 
 let sequelize;
 
 if (process.env.NODE_ENV === 'production') {
-	const databaseUrl = readFileSync("/mnt/secrets-store/databaseUrl", 'utf8')
+	const azureClient = await getAzureSecretsClient();
+	const databaseUrl = (await azureClient.getSecret('databaseUrl')).value;
 	const config = {
 		dialect: 'postgres',
 		ssl: {
@@ -42,7 +40,6 @@ sequelize.authenticate()
 	console.error('Unable to connect to the database:', err);
 });
 
-const EventsTable = EventsModel(sequelize, Sequelize.DataTypes);
 const UsersTable = UsersModel(sequelize, Sequelize.DataTypes);
 const BikesTable = BikesModel(sequelize, Sequelize.DataTypes);
 export { UsersTable, BikesTable };

@@ -1,6 +1,12 @@
 # Use the official Node.js image as the base image
 FROM node:23-slim
 
+# Define an environment variable for the secret
+ARG KEY_VAULT_NAME
+
+# Pass the secret as an environment variable
+ENV KEY_VAULT_NAME=$KEY_VAULT_NAME
+
 # Set the working directory
 WORKDIR /usr/src/app
 
