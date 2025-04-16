@@ -25,8 +25,7 @@ jobs:
         VERSION=$(cat app.version)
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
     - name: Build image
-      run: docker build --file Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}" .
-
+      run: docker build --build-arg KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }}  --file Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}" . 
     - name: Log in to registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
