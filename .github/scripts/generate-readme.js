@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { load } from 'js-yaml';
-import { dirname } from 'path';
+import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
 export default function script() {
