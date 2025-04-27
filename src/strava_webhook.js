@@ -3,7 +3,6 @@ import { UsersTable, BikesTable } from './dbObjects.js';
 import axios from 'axios';
 import { Client, GatewayIntentBits } from 'discord.js';
 const client = new Client({ intents: [GatewayIntentBits.Guilds]  });
-import { readFileSync } from 'node:fs';
 import { firstTimeAuth, getStravaAuthentication } from './shared_library/strava_authentication.js';
 import { getAzureSecretsClient } from './shared_library/azure_secrets.js';
 const app = express();
