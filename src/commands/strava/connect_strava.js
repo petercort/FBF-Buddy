@@ -4,7 +4,6 @@ import { UsersTable } from '../../dbObjects.js'; // Assuming you have a UsersTab
 import { getAzureSecretsClient } from '../../shared_library/azure_secrets.js';
 
 let stravaClientId;
-let stravaClientSecret;
 
 // call the azure_secrets.js to get the secrets
 const azureClient = await getAzureSecretsClient();
