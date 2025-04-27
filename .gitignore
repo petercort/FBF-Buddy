@@ -142,3 +142,6 @@ argocd/pod.yaml
 secrets-store
 
 .gitignore
+
+# Don't upload the powershell file as it contains secrets
+setupWebhookSub.ps1
