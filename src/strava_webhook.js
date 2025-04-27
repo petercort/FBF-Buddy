@@ -8,13 +8,10 @@ import { getAzureSecretsClient } from './shared_library/azure_secrets.js';
 const app = express();
 app.use(json());
 
-
-let discordToken;
-
 // call the azure_secrets.js to get the secrets
 const azureClient = await getAzureSecretsClient();
-discordToken = (await azureClient.getSecret('discordToken')).value;
-
+const discordToken = (await azureClient.getSecret('discordToken')).value;
+const stravaVerifyToken = (await azureClient.getSecret('stravaVerifyToken')).value; 
 
 client.login(discordToken);
 
@@ -76,7 +73,6 @@ app.post('/webhook', async (req, res) => {
 app.get('/webhook', (req, res) => {
     console.log('GET request received');
     // Your verify token. Should be a random string. should really hide this
-    const VERIFY_TOKEN = "spBoS8Zx9oSwZTaW";
     // Parses the query params
     let mode = req.query['hub.mode'];
     let token = req.query['hub.verify_token'];
@@ -84,7 +80,7 @@ app.get('/webhook', (req, res) => {
     // Checks if a token and mode is in the query string of the request
     if (mode && token) {
       // Verifies that the mode and token sent are valid
-      if (mode === 'subscribe' && token === VERIFY_TOKEN) {     
+      if (mode === 'subscribe' && token === stravaVerifyToken) {     
         // Responds with the challenge token from the request
         console.log('WEBHOOK_VERIFIED');
         res.json({"hub.challenge":challenge});  
