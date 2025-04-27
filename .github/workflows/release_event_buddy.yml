@@ -22,7 +22,7 @@ jobs:
     - name: Get release version
       id: release-version
       run: |
-        VERSION=$(cat app.version)
+        VERSION=$(jq -r .version package.json)
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
     - name: Build image
       run: docker build --build-arg KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }} 
