@@ -10,23 +10,11 @@ import { DefaultAzureCredential } from '@azure/identity';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = join(__filename, '..');
 
-// load configs 
-let discordToken;
-let azureClient; 
-
-
 const keyVaultName = process.env.KEY_VAULT_NAME;
 const keyVaultUrl = `https://${keyVaultName}.vault.azure.net`;
 const credential = new DefaultAzureCredential();
-azureClient = new SecretClient(keyVaultUrl, credential);
-
-
-try {
-	discordToken = (await azureClient.getSecret('discordToken')).value;
-} catch (error) {
-	console.error('Error retrieving secret from Azure Key Vault:', error);
-	process.exit(1);
-}
+const azureClient = new SecretClient(keyVaultUrl, credential);
+const discordToken = (await azureClient.getSecret('discordToken')).value;
 
 // Create the discord client and instantiate the commands collection
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -72,9 +60,17 @@ client.on(Events.InteractionCreate, async interaction => {
 	} catch (error) {
 		console.error(error);
 		if (interaction.replied || interaction.deferred) {
-			await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+			try {
+				await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+			} catch (followUpError) {
+				console.error('Error sending follow-up message:', followUpError);
+			}
 		} else {
-			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+			try {
+				await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+			} catch (replyError) {
+				console.error('Error sending reply message:', replyError);
+			}
 		}
 	}
 });
