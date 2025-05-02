@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 1.4.0
+
+#### feature
+* PR [#84](https://github.com/petercort/FBF-Buddy/pull/84) - add features outlined in issue 35
+
+
+
 ### Version 1.3.12
 
 #### bugfix
