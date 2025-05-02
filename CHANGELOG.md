@@ -1,6 +1,20 @@
 # Changelog
 
 
+### Version 1.3.7
+
+#### bugfix
+* PR [#78](https://github.com/petercort/FBF-Buddy/pull/78) - updating package json
+
+
+
+### Version 1.3.6
+
+#### enhancement
+* PR [#77](https://github.com/petercort/FBF-Buddy/pull/77) - Add tests for Strava webhook
+
+
+
 ### Version 1.3.2
 
 #### bugfix
