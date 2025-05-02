@@ -6,7 +6,6 @@ import { getAzureSecretsClient } from '../../shared_library/azure_secrets.js';
 // call the azure_secrets.js to get the secrets
 const azureClient = await getAzureSecretsClient();
 const stravaClientId = (await azureClient.getSecret('stravaClientId')).value;
-const stravaClientSecret = (await azureClient.getSecret('stravaClientSecret')).value;
 
 export const data = new SlashCommandBuilder()
     .setName('connect_strava')

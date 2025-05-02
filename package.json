@@ -9,9 +9,9 @@
         "node": ">=20.x"
     },
     "scripts": {
-        "start": "NODE_ENV=production node src/app.js",
+        "start": "node src/app.js",
         "register": "node src/commands.js",
-        "dev": "NODE_ENV=development nodemon src/app.js",
+        "dev": "nodemon src/app.js",
         "lint": "eslint src/**/*.js"
     },
     "author": "Peter Cort",
