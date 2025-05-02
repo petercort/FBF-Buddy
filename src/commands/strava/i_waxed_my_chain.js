@@ -1,5 +1,6 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { BikesTable, UsersTable } from '../../dbObjects.js';
+import { Op, Sequelize } from 'sequelize';
 
 export const data = new SlashCommandBuilder()
     .setName('i_waxed_my_chain')
@@ -35,9 +36,18 @@ export async function execute(interaction) {
         const year = currentDate.getFullYear();
         date = `${month}/${day}/${year}`;
     }
-    const bike = await BikesTable.findOne({ where: { userId: userId, name: bikeName } });
+    const bike = await BikesTable.findOne({
+        where: {
+            userId: userId,
+            [Op.and]: [
+                Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('name')), bikeName.toLowerCase())
+            ]
+        }
+    });
     var mileage = "";
     if (interaction.options.getString('mileage')) {
+        // convert to miles from meters
+        // 1 mile = 1609.344 meters
         mileage = interaction.options.getString('mileage') * 1609.344;
     } else {
         mileage = bike.distance;
@@ -45,7 +55,7 @@ export async function execute(interaction) {
 
     try {
         await BikesTable.update(
-            { lastWaxedDate: date, lastWaxedDistance: mileage },
+            { lastWaxedDate: date, lastWaxedDistance: Math.round(mileage) },
             { where: { userId: userId, bikeId: bike.bikeId } }
         );
         const distanceMiles = Math.round(mileage * 0.000621371192);
