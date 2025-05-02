@@ -37,3 +37,19 @@ export async function execute(interaction) {
         return interaction.reply({ content: 'There was an error fetching your latest ride.', ephemeral: true });
     }
 }
+
+import { getLastRide } from '../../shared_library/strava_authentication.js';
+
+export default {
+  name: 'get_last_ride',
+  description: 'Fetches the last ride for a user from Strava.',
+  execute: async (userId) => {
+    try {
+      const lastRide = await getLastRide(userId);
+      return lastRide;
+    } catch (error) {
+      console.error(error);
+      return 'An error occurred while fetching the last ride.';
+    }
+  },
+};

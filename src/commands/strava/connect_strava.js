@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from '@discordjs/builders';
 import { EmbedBuilder } from 'discord.js';
 import { UsersTable } from '../../dbObjects.js'; // Assuming you have a UsersTable to store user data
 import { getAzureSecretsClient } from '../../shared_library/azure_secrets.js';
+import { connectToStrava } from '../../shared_library/strava_authentication.js';
 
 // call the azure_secrets.js to get the secrets
 const azureClient = await getAzureSecretsClient();
@@ -24,3 +25,17 @@ export async function execute(interaction) {
     // Save the user ID to the database to track the connection process
     await UsersTable.upsert({ userId, strava_connected: false });
 }
+
+export default {
+  name: 'connect_strava',
+  description: 'Connects the user to Strava.',
+  execute: async (userId) => {
+    try {
+      const result = await connectToStrava(userId);
+      return result;
+    } catch (error) {
+      console.error(error);
+      return 'An error occurred while connecting to Strava.';
+    }
+  },
+};

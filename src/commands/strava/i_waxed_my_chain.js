@@ -54,6 +54,14 @@ export async function execute(interaction) {
     }
 
     try {
+        const activeChain = bike.chains.find((c) => c.isActive);
+        if (!activeChain) {
+            return await interaction.reply({ content: `No active chain found for bike ${bikeName}. Please set an active chain first.`, ephemeral: true });
+        }
+
+        activeChain.lastWaxedMileage = bike.distance;
+        await bike.save();
+
         await BikesTable.update(
             { lastWaxedDate: date, lastWaxedDistance: Math.round(mileage) },
             { where: { userId: userId, bikeId: bike.bikeId } }
@@ -65,3 +73,31 @@ export async function execute(interaction) {
         await interaction.reply({ content: 'There was an error updating the waxed chain date.', ephemeral: true });
     }
 }
+
+import bikes from '../../models/bikes.js';
+
+export default {
+  name: 'i_waxed_my_chain',
+  description: 'Updates the last waxed mileage for the active chain of a bike.',
+  execute: async (bikeName) => {
+    try {
+      const bike = await bikes.findOne({ where: { name: bikeName } });
+      if (!bike) {
+        return `Bike with name ${bikeName} not found.`;
+      }
+
+      const activeChain = bike.chains.find((c) => c.isActive);
+      if (!activeChain) {
+        return `No active chain found for bike ${bikeName}. Please set an active chain first.`;
+      }
+
+      activeChain.lastWaxedMileage = bike.distance;
+      await bike.save();
+
+      return `Active chain for bike ${bikeName} has been updated with the last waxed mileage.`;
+    } catch (error) {
+      console.error(error);
+      return 'An error occurred while updating the active chain.';
+    }
+  },
+};

@@ -26,3 +26,11 @@ export async function execute(interaction) {
 		await interaction.reply(`There was an error while reloading a command \`${command.data.name}\`:\n\`${error.message}\``);
 	}
 }
+
+export default {
+  name: 'reload',
+  description: 'Reloads a command.',
+  execute: (commandName) => {
+    console.log(`Reloading command: ${commandName}`);
+  },
+};
