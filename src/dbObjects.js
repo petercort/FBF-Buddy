@@ -6,31 +6,17 @@ import BikesModel from './models/bikes.js';
 
 let sequelize;
 
-if (process.env.NODE_ENV === 'production') {
-	const azureClient = await getAzureSecretsClient();
-	const databaseUrl = (await azureClient.getSecret('databaseUrl')).value;
-	const config = {
-		dialect: 'postgres',
-		ssl: {
-			rejectUnauthorized: false,
-			require: true,
-		}
+const azureClient = await getAzureSecretsClient();
+const databaseUrl = (await azureClient.getSecret('databaseUrl')).value;
+const config = {
+	dialect: 'postgres',
+	ssl: {
+		rejectUnauthorized: false,
+		require: true,
 	}
-	sequelize = new Sequelize(databaseUrl, config)
-} else {
-	const database = process.env.database
-	const username = process.env.username
-	const password = process.env.password
-	const config = {
-		host: process.env.host,
-		dialect: 'sqlite',
-		logging: false,
-		storage: 'database.sqlite',
-	}
-	sequelize = new Sequelize(database, username, password, config);
 }
+sequelize = new Sequelize(databaseUrl, config)
 
- 
   // Test the connection
 sequelize.authenticate()
 .then(() => {
