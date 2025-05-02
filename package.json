@@ -1,7 +1,7 @@
 {
     "name": "fbf-buddy",
     "private": true,
-    "version": "1.3.6",
+    "version": "1.3.7",
     "description": "Cycling event app for Discord",
     "main": "app.js",
     "type": "module",
@@ -24,6 +24,7 @@
         "dotenv": "^16.4.7",
         "express": "^4.18.2",
         "fbf-buddy": "file:",
+        "pg": "^8.11.1",
         "sequelize": "^6.37.7"
     },
     "devDependencies": {
