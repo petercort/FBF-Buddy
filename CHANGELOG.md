@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 1.3.9
+
+#### bugfix
+* PR [#80](https://github.com/petercort/FBF-Buddy/pull/80) - Maths
+
+
+
 ### Version 1.3.8
 
 #### bugfix
