@@ -1,17 +1,9 @@
 import { REST, Routes } from 'discord.js';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-require('dotenv').config()
-let discordToken;
-let appId;
-if (process.env.NODE_ENV === 'production') {
-	discordToken = readFileSync("/mnt/secrets-store/discordToken", 'utf8');
-	appId = readFileSync("/mnt/secrets-store/appId", 'utf8');
-} else {
-	discordToken = process.env.discordToken;
-	appId = process.env.appId;
-}
+let discordToken = process.env.discordToken;
+let appId = process.env.appId;
 
 const commands = [];
 // Grab all the command folders from the commands directory you created earlier

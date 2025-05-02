@@ -3,12 +3,10 @@ import { EmbedBuilder } from 'discord.js';
 import { UsersTable } from '../../dbObjects.js'; // Assuming you have a UsersTable to store user data
 import { getAzureSecretsClient } from '../../shared_library/azure_secrets.js';
 
-let stravaClientId;
-
 // call the azure_secrets.js to get the secrets
 const azureClient = await getAzureSecretsClient();
-stravaClientId = (await azureClient.getSecret('stravaClientId')).value;
-stravaClientSecret = (await azureClient.getSecret('stravaClientSecret')).value;
+const stravaClientId = (await azureClient.getSecret('stravaClientId')).value;
+const stravaClientSecret = (await azureClient.getSecret('stravaClientSecret')).value;
 
 export const data = new SlashCommandBuilder()
     .setName('connect_strava')

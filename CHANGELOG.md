@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 1.3.8
+
+#### bugfix
+* PR [#79](https://github.com/petercort/FBF-Buddy/pull/79) - updating
+
+
+
 ### Version 1.3.7
 
 #### bugfix
