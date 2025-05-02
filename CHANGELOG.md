@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 1.3.12
+
+#### bugfix
+* PR [#83](https://github.com/petercort/FBF-Buddy/pull/83) - Dependencies
+
+
+
 ### Version 1.3.11
 
 #### chore
