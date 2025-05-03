@@ -1,9 +1,10 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { BikesTable, UsersTable } from '../../dbObjects.js';
-export const data = new SlashCommandBuilder()
-    .setName('get_all_bikes')
-    .setDescription('Get all your bikes!');
-export async function execute(interaction) {
+
+export default {
+  name: 'get_all_bikes',
+  description: 'Retrieves all bikes for a user.',
+  execute: async (interaction) => {
     const userId = interaction.user.id;
     // look up if the user is in the database
     try {
@@ -27,4 +28,5 @@ export async function execute(interaction) {
         console.error('Error fetching bikes:', error);
         return await interaction.reply({ content: 'There was an error fetching your bikes.', ephemeral: true });
     }
-}
+  },
+};
