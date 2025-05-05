@@ -22,7 +22,7 @@
         "@npmcli/fs": "^4.0.0",
         "axios": "^1.7.9",
         "clean": "^4.0.2",
-        "discord.js": "^14.17.3",
+        "discord.js": "^14.19.3",
         "dotenv": "^16.4.7",
         "express": "^5.1.0",
         "fbf-buddy": "file:",
