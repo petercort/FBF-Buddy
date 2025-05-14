@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 1.4.0
+
+#### bugfix
+* PR [#90](https://github.com/petercort/FBF-Buddy/pull/90) - updating strava connect to pull the redirect uri
+
+
+
 ### Version 1.3.12
 
 #### bugfix
