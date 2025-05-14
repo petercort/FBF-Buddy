@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 0.0.0
+
+#### chore
+* PR [#91](https://github.com/petercort/FBF-Buddy/pull/91) - updating dependabot to group configs and work with our pr body strategy [no ci]
+
+
+
 ### Version 1.4.0
 
 #### bugfix
