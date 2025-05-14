@@ -25,3 +25,12 @@ This section will automatically tag your Pull Request with appropriate labels. C
 -->
 
 - Chore
+
+## Changelog Entry
+
+<!-- Describe your Pull Request changes here, as normal -->
+
+```
+TODO: Replace this inner text with a useful message
+for users of the affected modules!
+```
