@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 0.1.0
+
+#### bugfix
+* PR [#114](https://github.com/petercort/FBF-Buddy/pull/114) - Bug/issue 94
+
+
+
 ### Version 0.0.0
 
 #### chore
