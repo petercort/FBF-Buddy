@@ -19,5 +19,61 @@
   ## Known Issues
   - No known issues
 
+  ## Local dev
+
+  Clone the repository 
+  `git clone ` 
+
+  Install dependencies
+  `cd fbf-buddy && npm install` 
+
+  ## Setting up garbage
+  We need to setup the following things: 
+  Strava app 
+  Postgres DB
+  Azure KeyVault
+
+  ### Strava App 
+  
+  Navigate to the secret [API application page](https://www.strava.com/settings/api)
+
+  Fill out all the fields. For callback url with local dev, use your favorite webhook delivery tool like [ngrok](https://ngrok.com/)!
+  *** Caveat! *** Strava's API sucks and you can't use paths in your webhook callback url, so something like smee.io won't work because it appends the UID as a path (ie smee.io/324lkjdfs), and that breaks Strava. Ngrok prepends as a subdomain (ie 324lkjdfs.ngrok-app.free) wwhich is ok (???). 
+
+  Save the Client ID, Client Secret, and your webhook delivery url, as we need to dump those in our Azure Key Vault later!
+
+  Lots of things rely on azure to make dev and production easier! 
+
+  Database: create a postgres db, I used cosmos DB but I suppose you could use a local postgres db for this. 
+
+  Secrets are stored in an azure keyvault and are required! Create an azure keyvault and add the following secrets
+  | secret name | description and where to get it | 
+  | ----------- | ------------------------------- | 
+  | appid | Discord app ID | 
+  | discordtoken | Token for your discord app | 
+  | guildid | Guild ID from discord | 
+  | publickey | Discord public key | 
+  | databaseUrl | Postgres connection string created earlier | 
+  | stravaClientId | Client ID from Strava integration | 
+  | stravaclientsecret | Secret from Strava integration | 
+  | stravaredirecturi | Redirect URI from Strava integration (used for auth callback and subscription setup) | 
+  | stravaVerifyToken | Strava webhook verification token (you generate this!) | 
+
+
+  Once everything is setup, we need to add a Strava webhook subscription. Run the following command, replacing the clientID, clientSecret, and webhook delivery callbackUrl with the values from earlier: 
+  ```
+  curl -X POST \
+  https://www.strava.com/api/v3/push_subscriptions \
+  -F client_id=$clientID \
+  -F client_secret=$clientSecret \
+  -F callback_url=$callbackUrl \
+  -F verify_token=$stravaVerifyToken
+  ```
+
+  
+
   ## Owner Maintainers
   - @petercort
+
+
+  

@@ -1,23 +1,18 @@
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
+import { Collection, Events, GatewayIntentBits } from 'discord.js';
 import { UsersTable, BikesTable } from './dbObjects.js';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { SecretClient } from '@azure/keyvault-secrets';
-import { DefaultAzureCredential } from '@azure/identity';
+import { getDiscordClient } from './shared_library/discord_client.js';
 
 // Define __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = join(__filename, '..');
 
-const keyVaultName = process.env.KEY_VAULT_NAME;
-const keyVaultUrl = `https://${keyVaultName}.vault.azure.net`;
-const credential = new DefaultAzureCredential();
-const azureClient = new SecretClient(keyVaultUrl, credential);
-const discordToken = (await azureClient.getSecret('discordToken')).value;
+// Get the shared Discord client
+const client = await getDiscordClient();
 
-// Create the discord client and instantiate the commands collection
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+// Create the commands collection
 client.commands = new Collection();
 const foldersPath = join(__dirname, 'commands');
 const commandFolders = readdirSync(foldersPath);
@@ -77,5 +72,3 @@ client.on(Events.InteractionCreate, async interaction => {
 
 // Start the Strava webhook server
 import './strava_webhook.js';
-
-client.login(discordToken);
