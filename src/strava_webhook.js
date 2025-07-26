@@ -1,19 +1,30 @@
 import express, { json } from 'express';
 import { UsersTable, BikesTable } from './dbObjects.js';
 import axios from 'axios';
-import { Client, GatewayIntentBits } from 'discord.js';
-const client = new Client({ intents: [GatewayIntentBits.Guilds]  });
 import { firstTimeAuth, getStravaAuthentication } from './shared_library/strava_authentication.js';
 import { getAzureSecretsClient } from './shared_library/azure_secrets.js';
+import { getDiscordClient } from './shared_library/discord_client.js';
+
 const app = express();
+
+// Add request logging middleware
+app.use((req, res, next) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] ${req.method} ${req.path} - Headers:`, JSON.stringify(req.headers, null, 2));
+    if (req.body && Object.keys(req.body).length > 0) {
+        console.log(`[${timestamp}] Request Body:`, JSON.stringify(req.body, null, 2));
+    }
+    next();
+});
+
 app.use(json());
 
 // call the azure_secrets.js to get the secrets
 const azureClient = await getAzureSecretsClient();
-const discordToken = (await azureClient.getSecret('discordToken')).value;
-const stravaVerifyToken = (await azureClient.getSecret('stravaVerifyToken')).value; 
+const stravaVerifyToken = (await azureClient.getSecret('stravaVerifyToken')).value;
 
-client.login(discordToken);
+// Get the shared Discord client
+const client = await getDiscordClient();
 
 app.get('/', (req, res) => {
     // send a 200 response to the root path
