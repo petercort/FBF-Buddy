@@ -14,7 +14,7 @@ describe('Strava Webhook', () => {
   it('should handle activity creation events', async () => {
     UsersTable.findOne.mockResolvedValue({ dataValues: { userId: '12345' } });
     axios.get.mockResolvedValueOnce({ data: { gear: { id: 'bike123', distance: 10000 } } });
-    BikesTable.findOne.mockResolvedValue({ dataValues: { lastWaxedDistance: 5000 } });
+    BikesTable.findOne.mockResolvedValue({ dataValues: { lastWaxedDistance: 5000, name: 'Test Bike' } });
 
     const response = await request(app)
       .post('/webhook')
@@ -23,6 +23,7 @@ describe('Strava Webhook', () => {
     expect(response.status).toBe(200);
     expect(UsersTable.findOne).toHaveBeenCalledWith({ where: { strava_user_id: '12345' } });
     expect(BikesTable.update).toHaveBeenCalled();
+    expect(BikesTable.findOne).toHaveBeenCalledTimes(1);
   });
 
   it('should return 200 for unsupported events', async () => {
