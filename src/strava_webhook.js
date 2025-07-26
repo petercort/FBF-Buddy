@@ -42,18 +42,24 @@ app.post('/webhook', async (req, res) => {
                 const currentDistance = rideData.data.gear.distance;
                 // update the distance for the gear
                 await syncBike(gearId, currentDistance, user.dataValues.userId);
-                const lastWaxedDistance = await getLastWaxed(gearId, user.dataValues.userId);
+                const bikeDetails = await getBikeDetails(gearId, user.dataValues.userId);
+                const lastWaxedDistance = bikeDetails.lastWaxedDistance;
+                const bikeName = bikeDetails.name;
             
                 const totalMiles = Math.round(currentDistance * 0.000621371);
                 const lastWaxedMiles = Math.round(lastWaxedDistance * 0.000621371);
                 const currentDiff = totalMiles - lastWaxedMiles;
                 if (currentDiff > 250) {
-                    const message = `Nice ride and it's time to wax your chain! You've ridden ${currentDiff} miles since your last wax.`
+                    const message = bikeName 
+                        ? `Nice ride and it's time to wax your chain! You've ridden your ${bikeName} ${currentDiff} miles since your last wax.`
+                        : `Nice ride and it's time to wax your chain! You've ridden ${currentDiff} miles since your last wax.`
                     const id = user.dataValues.userId;
                     const discordUser = await client.users.fetch(id)
                     discordUser.send(message);
                 } else if (currentDiff > 150) {    
-                    const message = `Nice ride! You're getting close to needing to wax your chain. You've ridden ${currentDiff} miles since your last wax.`;
+                    const message = bikeName
+                        ? `Nice ride! You're getting close to needing to wax your chain. You've ridden your ${bikeName} ${currentDiff} miles since your last wax.`
+                        : `Nice ride! You're getting close to needing to wax your chain. You've ridden ${currentDiff} miles since your last wax.`;
                     const id = user.dataValues.userId;
                     const discordUser = await client.users.fetch(id)
                     discordUser.send(message);
@@ -153,12 +159,15 @@ async function syncBike(bikeId, distance, userId) {
     }
 }
 
-async function getLastWaxed(bikeId, userId){
+async function getBikeDetails(bikeId, userId){
     try {
         const output = await BikesTable.findOne({ where: { bikeId, userId } });
-        return output.dataValues.lastWaxedDistance;
+        return {
+            lastWaxedDistance: output.dataValues.lastWaxedDistance,
+            name: output.dataValues.name
+        };
     } catch (error) {
-        console.error('Error finding data:', error);
+        console.error('Error finding bike details:', error);
+        return { lastWaxedDistance: 0, name: null };
     }
-
 }
