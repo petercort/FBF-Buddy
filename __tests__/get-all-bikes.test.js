@@ -1,7 +1,7 @@
-const { execute } = require('../src/commands/strava/get_all_bikes');
-const { UsersTable, BikesTable } = require('../src/dbObjects');
+const { execute } = require('../src/commands/strava/get-all-bikes');
+const { UsersTable, BikesTable } = require('../src/db-objects');
 
-jest.mock('../src/dbObjects', () => ({
+jest.mock('../src/db-objects', () => ({
   UsersTable: { findOne: jest.fn() },
   BikesTable: { findAll: jest.fn() },
 }));

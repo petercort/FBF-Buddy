@@ -1,5 +1,5 @@
 import { Client, GatewayIntentBits } from 'discord.js';
-import { getAzureSecretsClient } from './azure_secrets.js';
+import { getAzureSecretsClient } from './azure-secrets.js';
 
 let discordClient;
 
