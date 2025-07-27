@@ -16,7 +16,6 @@ jobs:
     permissions:
       contents: write
       packages: write
-      id-token: write
     steps:
     - name: checkout 
       uses: actions/checkout@v4
@@ -57,6 +56,9 @@ jobs:
         docker push $IMAGE_ID:$VERSION
         docker push $IMAGE_ID:latest
 
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
     - name: Create Release
       uses: elgohr/Github-Release-Action@v5
       env:
@@ -65,10 +67,16 @@ jobs:
         title: ${{ steps.release-version.outputs.VERSION }}
         tag: ${{ steps.release-version.outputs.VERSION }}
         
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
     - name: Azure login
       uses: azure/login@v2
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        auth-type: IDENTITY
+        client-id: ${{ secrets.AZURE_DEPLOY_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         
     - name: Deploy public GHCR image to Container App
       uses: azure/container-apps-deploy-action@v1
