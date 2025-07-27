@@ -125,8 +125,8 @@ jobs:
           mkdir -p tmp && cd tmp
           echo "# Changelog" > updated-changelog.md
           echo "" >> updated-changelog.md
-          printf "${{ needs.label.outputs.changelog-content }}" >> updated-changelog.md
-          printf "${{ steps.fetch-release-notes.outputs.existing-changelog }}" | sed '1d' >> updated-changelog.md
+          echo '${{ needs.label.outputs.changelog-content }}' >> updated-changelog.md
+          echo '${{ steps.fetch-release-notes.outputs.existing-changelog }}' | sed '1d' >> updated-changelog.md
       - name: Install js-yaml
         working-directory: src
         run: |

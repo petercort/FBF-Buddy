@@ -1,6 +1,16 @@
 # Changelog
 
 
+### Version 1.5.1
+
+#### enhancement
+* PR [#116](https://github.com/petercort/FBF-Buddy/pull/116) - adding a force deployment when we build
+
+```
+Enhanced deploys to auto deploy the latest rather than waiting for whatever Azure scheduler picks up the latest image.
+```
+
+
 ### Version 1.5.0
 
 #### chore
