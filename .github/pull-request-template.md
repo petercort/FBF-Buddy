@@ -19,11 +19,11 @@ STOP! Click the 'Preview' tab for a smoother PR experience!
 <table>
   <tr>
     <td><b>Standard Release PR</b><br/>Standard Release Pull Request</td>
-    <td><a href="?expand=1&template=standard_release.md">click here</a></td>
+    <td><a href="?expand=1&template=standard-release.md">click here</a></td>
   </tr> 
   <tr>
     <td><b>No Release Change</b><br/>Create pull request with change that does not required a release.</td>
-    <td><a href="?expand=1&template=no_release.md">click here</a></td>
+    <td><a href="?expand=1&template=no-release.md">click here</a></td>
   </tr> 
 </table>
 

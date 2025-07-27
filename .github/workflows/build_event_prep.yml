@@ -65,7 +65,7 @@ jobs:
         changetype: ${{ steps.parse-labels.outputs.change-type }}
       with:
         script: |
-          const { default: script } = await import('${{ github.workspace}}/src/.github/scripts/pr-scripts/plan_changelog.js')
+          const { default: script } = await import('${{ github.workspace}}/src/.github/scripts/pr-scripts/plan-changelog.js')
           await script({github, context, core})
   comment:
     needs: label

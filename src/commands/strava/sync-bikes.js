@@ -1,26 +1,29 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { BikesTable, UsersTable } from '../../dbObjects.js';
+import { BikesTable, UsersTable } from '../../db-objects.js';
 import axios from 'axios';
-import { getStravaAuthentication } from '../../shared_library/strava_authentication.js';
+import { getStravaAuthentication } from '../../shared-library/strava-authentication.js';
+
+const METERS_TO_MILES_CONVERSION = 0.000621371;
 
 export const data = new SlashCommandBuilder()
   .setName('sync_bikes')
   .setDescription('Sync bike data from Strava!');
+
 export async function execute(interaction) {
   const userId = interaction.user.id;
   const user = await UsersTable.findOne({ where: { userId } });
   if (!user) {
     return await interaction.reply({ content: 'Please connect your Strava using the /connect_strava command.', ephemeral: true });
   }
-  const strava_access_token = await getStravaAuthentication(user.dataValues);
-  if (!strava_access_token) {
+  const stravaAccessToken = await getStravaAuthentication(user.dataValues);
+  if (!stravaAccessToken) {
     return interaction.reply({ content: 'You need to connect your Strava account first.', ephemeral: true });
   }
   try {
     // Fetch bike data from Strava
     const response = await axios.get('https://www.strava.com/api/v3/athlete', {
       headers: {
-        'Authorization': `Bearer ${strava_access_token}`
+        'Authorization': `Bearer ${stravaAccessToken}`
       }
     });
 
@@ -36,7 +39,7 @@ export async function execute(interaction) {
       try {
         const bikeData = await axios.get(`https://www.strava.com/api/v3/gear/${bike.id}`, {
           headers: {
-            'Authorization': `Bearer ${strava_access_token}`
+            'Authorization': `Bearer ${stravaAccessToken}`
           }
         });
         const updatedData = await BikesTable.upsert({
@@ -53,7 +56,7 @@ export async function execute(interaction) {
         return await interaction.reply({ content: 'There was an error fetching your bike data.', ephemeral: true });
       }
     }
-    const bikeList = updatedBikes.map(bike => `${bike.name} (${bike.brand} ${bike.model} ${Math.round(bike.distance * 0.000621371)})`).join('\n');
+    const bikeList = updatedBikes.map(bike => `${bike.name} (${bike.brand} ${bike.model} ${Math.round(bike.distance * METERS_TO_MILES_CONVERSION)})`).join('\n');
     return await interaction.reply({ content: `Your bikes have been synced:\n${bikeList}`, ephemeral: true });
   } catch (error) {
     console.error('Error fetching or syncing bikes:', error);

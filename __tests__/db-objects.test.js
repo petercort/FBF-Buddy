@@ -1,5 +1,5 @@
 const { sync } = require('sequelize');
-const { EventsTable, UsersTable, BikesTable } = require('../src/dbObjects');
+const { EventsTable, UsersTable, BikesTable } = require('../src/db-objects');
 
 jest.mock('sequelize', () => ({
   sync: jest.fn(),

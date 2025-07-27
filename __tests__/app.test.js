@@ -24,12 +24,12 @@ describe('Discord Bot Initialization', () => {
     const commandsPath = path.join(__dirname, '../src/commands');
     jest.spyOn(fs, 'readdirSync').mockImplementation((dir) => {
       if (dir === commandsPath) return ['strava', 'utility'];
-      if (dir.includes('strava')) return ['get_all_bikes.js'];
+      if (dir.includes('strava')) return ['get-all-bikes.js'];
       if (dir.includes('utility')) return ['hello.js'];
       return [];
     });
 
-    jest.mock('../src/commands/strava/get_all_bikes.js', () => ({
+    jest.mock('../src/commands/strava/get-all-bikes.js', () => ({
       data: { name: 'get_all_bikes' },
       execute: jest.fn(),
     }), { virtual: true });
@@ -53,8 +53,8 @@ describe('Discord Bot Initialization', () => {
   });
 
   it('should handle missing command properties gracefully', () => {
-    jest.spyOn(fs, 'readdirSync').mockImplementation(() => ['invalid_command.js']);
-    jest.mock('../src/commands/invalid_command.js', () => ({}), { virtual: true });
+    jest.spyOn(fs, 'readdirSync').mockImplementation(() => ['invalid-command.js']);
+    jest.mock('../src/commands/invalid-command.js', () => ({}), { virtual: true });
 
     const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
