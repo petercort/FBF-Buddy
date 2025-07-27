@@ -10,6 +10,9 @@ env:
   RESOURCE_GROUP: peter-corp-rg
   CONTAINER_APP_NAME: discord-buddy
 
+permissions:
+  id-token: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
