@@ -16,6 +16,9 @@ jobs:
     permissions:
       contents: write
       packages: write
+    outputs:
+      version: ${{ steps.release-version.outputs.VERSION }}
+      image-id: ${{ steps.push-image.outputs.IMAGE_ID }}
     steps:
     - name: checkout 
       uses: actions/checkout@v4
@@ -39,6 +42,7 @@ jobs:
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Push image with multiple tags
+      id: push-image
       env: 
         VERSION: ${{ steps.release-version.outputs.VERSION }}
       run: |
@@ -47,6 +51,7 @@ jobs:
 
         echo IMAGE_ID=$IMAGE_ID
         echo VERSION=$VERSION
+        echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_OUTPUT
 
         # Tag the image with both the version and 'latest'
         docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
@@ -57,17 +62,23 @@ jobs:
         docker push $IMAGE_ID:latest
 
   create-release:
+    needs: build
     runs-on: ubuntu-latest
     steps:
+    - name: checkout 
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     - name: Create Release
       uses: elgohr/Github-Release-Action@v5
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        title: ${{ steps.release-version.outputs.VERSION }}
-        tag: ${{ steps.release-version.outputs.VERSION }}
+        title: ${{ needs.build.outputs.version }}
+        tag: ${{ needs.build.outputs.version }}
         
   deploy:
+    needs: [build, create-release]
     runs-on: ubuntu-latest
     steps:
     - name: Azure login
@@ -81,6 +92,6 @@ jobs:
     - name: Deploy public GHCR image to Container App
       uses: azure/container-apps-deploy-action@v1
       with:
-        containerAppName: $CONTAINER_APP_NAME
-        resourceGroup: $RESOURCE_GROUP
-        imageToDeploy: ghcr.io/${{ github.repository_owner }}/$IMAGE_ID:latest
+        containerAppName: ${{ env.CONTAINER_APP_NAME }}
+        resourceGroup: ${{ env.RESOURCE_GROUP }}
+        imageToDeploy: ${{ needs.build.outputs.image-id }}:latest
