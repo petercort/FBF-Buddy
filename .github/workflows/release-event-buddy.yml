@@ -87,10 +87,9 @@ jobs:
       uses: azure/login@v2
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
-        
-    - name: Deploy public GHCR image to Container App
-      uses: azure/container-apps-deploy-action@v1
+    - name: Deploy FBF Buddy 
+      uses: azure/webapps-deploy@v2
       with:
-        containerAppName: ${{ env.CONTAINER_APP_NAME }}
-        resourceGroup: ${{ env.RESOURCE_GROUP }}
-        imageToDeploy: ${{ needs.build.outputs.image-id }}:latest
+        app-name: 'discord-buddy'
+        images: 'ghcr.io/${{ needs.build.outputs.image-id }}:latest'
+  
