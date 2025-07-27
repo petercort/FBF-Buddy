@@ -1,6 +1,16 @@
 # Changelog
 
 
+### Version 1.5.3
+
+#### bugfix
+* PR [#118](https://github.com/petercort/FBF-Buddy/pull/118) - updating the message when bike name is referenced close to wax time
+
+```
+Quick update of the wax message
+```
+
+
 ### Version 1.5.2
 
 #### bugfix
