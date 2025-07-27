@@ -59,14 +59,14 @@ app.post('/webhook', async (req, res) => {
         const currentDiff = totalMiles - lastWaxedMiles;
         if (currentDiff > 250) {
           const message = bikeName
-            ? `Nice ride and it's time to wax your chain! You've ridden your ${bikeName} ${currentDiff} miles since your last wax.`
+            ? `Nice ride and it's time to wax your chain! ${bikeName} has ridden ${currentDiff} miles since its last wax.`
             : `Nice ride and it's time to wax your chain! You've ridden ${currentDiff} miles since your last wax.`;
           const id = user.dataValues.userId;
           const discordUser = await discordClient.users.fetch(id);
           discordUser.send(message);
         } else if (currentDiff > 150) {
           const message = bikeName
-            ? `Nice ride! You're getting close to needing to wax your chain. You've ridden your ${bikeName} ${currentDiff} miles since your last wax.`
+            ? `Nice ride! You're getting close to needing to wax your chain. ${bikeName} has ${currentDiff} miles since its last wax.`
             : `Nice ride! You're getting close to needing to wax your chain. You've ridden ${currentDiff} miles since your last wax.`;
           const id = user.dataValues.userId;
           const discordUser = await discordClient.users.fetch(id);
