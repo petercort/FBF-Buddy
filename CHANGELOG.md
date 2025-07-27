@@ -1,6 +1,16 @@
 # Changelog
 
 
+### Version 1.5.2
+
+#### bugfix
+* PR [#117](https://github.com/petercort/FBF-Buddy/pull/117) - updating with login
+
+```
+Adds Azure login to deploy workflow
+```
+
+
 ### Version 1.5.1
 
 #### enhancement
