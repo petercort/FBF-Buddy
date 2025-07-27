@@ -55,7 +55,7 @@ jobs:
         RELEASE_TYPE: ${{ steps.parse-labels.outputs.release-type }}
       with:
         script: |
-          const { default: script } = await import('${{ github.workspace}}/src/.github/scripts/pr-scripts/plan_new-version.js')
+          const { default: script } = await import('${{ github.workspace}}/src/.github/scripts/pr-scripts/plan-new-version.js')
           await script({core})
     - name: Extract changelog entry
       uses: actions/github-script@v7
@@ -89,7 +89,7 @@ jobs:
           changelogContent: '${{ needs.label.outputs.changelog-content }}'
         with:
           script: |
-            const { default: script } = await import('${{ github.workspace}}/src/.github/scripts/pr-scripts/comment_pr-comment.js')
+            const { default: script } = await import('${{ github.workspace}}/src/.github/scripts/pr-scripts/pr-comment.js')
             await script({github, context, core})
   update-files:
     needs: label
