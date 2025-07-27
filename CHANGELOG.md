@@ -1,5 +1,6 @@
 # Changelog
 
+
 ### Version 1.5.1
 
 #### enhancement
@@ -10,11 +11,24 @@ Enhanced deploys to auto deploy the latest rather than waiting for whatever Azur
 ```
 
 
-
 ### Version 1.5.0
 
 #### chore
 * PR [#115](https://github.com/petercort/FBF-Buddy/pull/115) - refactoring to standardize case
+
+
+
+### Version 0.1.0
+
+#### bugfix
+* PR [#114](https://github.com/petercort/FBF-Buddy/pull/114) - Bug/issue 94
+
+
+
+### Version 0.0.0
+
+#### chore
+* PR [#91](https://github.com/petercort/FBF-Buddy/pull/91) - updating dependabot to group configs and work with our pr body strategy [no ci]
 
 
 
