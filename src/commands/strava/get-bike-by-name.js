@@ -1,14 +1,18 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { BikesTable, UsersTable } from '../../dbObjects.js';
+import { BikesTable, UsersTable } from '../../db-objects.js';
+
+const METERS_TO_MILES_CONVERSION = 0.000621371;
+
 export const data = new SlashCommandBuilder()
   .setName('get_bike_by_name')
   .setDescription('Get a bike by it\'s name!')
   .addStringOption(option => option.setName('name')
     .setDescription('The name of the bike')
     .setRequired(true));
+
 export async function execute(interaction) {
   const userId = interaction.user.id;
-  // look up if the user is in the database
+  // Look up if the user is in the database
   try {
     const user = await UsersTable.findOne({ where: { userId } });
     if (!user) {
@@ -26,7 +30,7 @@ export async function execute(interaction) {
     if (!bike) {
       return await interaction.reply({ content: 'No bike found with that name.', ephemeral: true });
     }
-    const bikeInfo = `${bike.name}: ${bike.brand} ${bike.model}. ${Math.round(bike.distance * 0.000621371)} miles. Last waxed on ${bike.lastWaxedDate} at ${Math.round(bike.lastWaxedDistance * 0.000621371)} miles.`;
+    const bikeInfo = `${bike.name}: ${bike.brand} ${bike.model}. ${Math.round(bike.distance * METERS_TO_MILES_CONVERSION)} miles. Last waxed on ${bike.lastWaxedDate} at ${Math.round(bike.lastWaxedDistance * METERS_TO_MILES_CONVERSION)} miles.`;
     return await interaction.reply({ content: bikeInfo, ephemeral: true });
   } catch (error) {
     console.error('Error fetching bike:', error);

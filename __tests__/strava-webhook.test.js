@@ -1,9 +1,9 @@
 import request from 'supertest';
-import app from '../src/strava_webhook';
-import { UsersTable, BikesTable } from '../src/dbObjects';
+import app from '../src/strava-webhook';
+import { UsersTable, BikesTable } from '../src/db-objects';
 import axios from 'axios';
 
-jest.mock('../src/dbObjects', () => ({
+jest.mock('../src/db-objects', () => ({
   UsersTable: { findOne: jest.fn() },
   BikesTable: { update: jest.fn(), findOne: jest.fn() },
 }));
