@@ -1,6 +1,13 @@
 # Changelog
 
 
+### Version 1.5.0
+
+#### chore
+* PR [#115](https://github.com/petercort/FBF-Buddy/pull/115) - refactoring to standardize case
+
+
+
 ### Version 0.1.0
 
 #### bugfix
