@@ -11,7 +11,6 @@ Adds Azure login to deploy workflow
 ```
 
 
-
 ### Version 1.5.1
 
 #### enhancement
