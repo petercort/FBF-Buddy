@@ -1,6 +1,16 @@
 # Changelog
 
 
+### Version 1.5.4
+
+#### bugfix
+* PR [#119](https://github.com/petercort/FBF-Buddy/pull/119) - fixes searching on activity type to ensure only rides are processed. …
+
+```
+Fixes activity_type based processing. Works only on type:ride events
+```
+
+
 ### Version 1.5.3
 
 #### bugfix
