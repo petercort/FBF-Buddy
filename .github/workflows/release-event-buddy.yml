@@ -88,7 +88,7 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     - name: Deploy FBF Buddy 
-      uses: azure/webapps-deploy@v2
+      uses: azure/webapps-deploy@v3
       with:
         app-name: 'discord-buddy'
         images: 'ghcr.io/${{ needs.build.outputs.image-id }}:latest'
