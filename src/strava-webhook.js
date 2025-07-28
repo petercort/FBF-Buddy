@@ -43,11 +43,22 @@ app.post('/webhook', async (req, res) => {
     if (user) {
       const stravaAccessToken = await getStravaAuthentication(user.dataValues);
       try {
-        const rideData = await axios.get(`https://www.strava.com/api/v3/activities/${event.object_id}`, {
+        const activityData = await axios.get(`https://www.strava.com/api/v3/activities/${event.object_id}`, {
           headers: { Authorization: `Bearer ${stravaAccessToken}` }
         });
-        const gearId = rideData.data.gear.id;
-        const currentDistance = rideData.data.gear.distance;
+        
+        // Only process if it's a bike ride and has gear information
+        if (activityData.data.type !== 'Ride' || !activityData.data.gear) {
+          console.log(`Skipping activity ${event.object_id}: type=${activityData.data.type}, has_gear=${!!activityData.data.gear}`);
+          res.sendStatus(200);
+          return;
+        } else {
+          // show the activity data type 
+          console.log(`Processing activity ${event.object_id}: type=${activityData.data.type}, has_gear=${!!activityData.data.gear}`);
+        }
+        
+        const gearId = activityData.data.gear.id;
+        const currentDistance = activityData.data.gear.distance;
         // update the distance for the gear
         await syncBike(gearId, currentDistance, user.dataValues.userId);
         const bikeDetails = await getBikeDetails(gearId, user.dataValues.userId);
