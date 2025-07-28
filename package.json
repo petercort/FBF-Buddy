@@ -23,7 +23,7 @@
         "axios": "^1.7.9",
         "clean": "^4.0.2",
         "discord.js": "^14.17.3",
-        "dotenv": "^16.4.7",
+        "dotenv": "^17.2.1",
         "express": "^5.1.0",
         "fbf-buddy": "file:",
         "pg": "^8.11.1",
