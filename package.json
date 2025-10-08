@@ -1,7 +1,7 @@
 {
     "name": "fbf-buddy",
     "private": true,
-    "version": "1.5.4",
+    "version": "0.0.0",
     "description": "Cycling event app for Discord",
     "main": "app.js",
     "type": "module",
@@ -20,7 +20,7 @@
         "@azure/identity": "^4.12.0",
         "@azure/keyvault-secrets": "^4.9.0",
         "@npmcli/fs": "^4.0.0",
-        "axios": "^1.7.9",
+        "axios": "^1.12.0",
         "clean": "^4.0.2",
         "discord.js": "^14.17.3",
         "dotenv": "^17.2.3",
