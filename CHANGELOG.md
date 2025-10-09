@@ -4,42 +4,29 @@
 ### Version 0.0.0
 
 #### semver:patch
-* PR [#131](https://github.com/petercort/FBF-Buddy/pull/131) - Bump axios from 1.11.0 to 1.12.0 in the npm_and_yarn group across 1 directory
+* PR [#134](https://github.com/petercort/FBF-Buddy/pull/134) - Bump dotenv from 16.6.1 to 17.2.3
+* PR [#133](https://github.com/petercort/FBF-Buddy/pull/133) - Bump jest from 29.7.0 to 30.2.0
+* PR [#132](https://github.com/petercort/FBF-Buddy/pull/132) - Bump @azure/identity from 4.10.2 to 4.12.0
+* PR [#131](https://github.com/petercort/FBF-Buddy/pull/131) - Bump axios from 1.11.0 to 1.12.0
+* PR [#125](https://github.com/petercort/FBF-Buddy/pull/125) - Bump eslint from 9.32.0 to 9.33.0
+* PR [#123](https://github.com/petercort/FBF-Buddy/pull/123) - Bump @eslint/js from 9.32.0 to 9.33.0
+
+#### chore
+* PR [#128](https://github.com/petercort/FBF-Buddy/pull/128) - Bump actions/github-script from 7 to 8
+* PR [#126](https://github.com/petercort/FBF-Buddy/pull/126) - Bump actions/checkout from 4 to 5
+* PR [#120](https://github.com/petercort/FBF-Buddy/pull/120) - Bump azure/webapps-deploy from 2 to 3
 
 ```
-<h2>Release v1.12.0</h2>
-<h2>Release notes:</h2>
-<h3>Bug Fixes</h3>
-<ul>
-<li>adding build artifacts (<a href="https://github.com/axios/axios/commit/9ec86de257bfa33856571036279169f385ed92bd">9ec86de</a>)</li>
-<li>dont add dist on release (<a href="https://github.com/axios/axios/commit/a2edc3606a4f775d868a67bb3461ff18ce7ecd11">a2edc36</a>)</li>
-<li><strong>fetch-adapter:</strong> set correct Content-Type for Node FormData (<a href="https://redirect.github.com/axios/axios/issues/6998">#6998</a>) (<a href="https://github.com/axios/axios/commit/a9f47afbf3224d2ca987dbd8188789c7ea853c5d">a9f47af</a>)</li>
-<li><strong>node:</strong> enforce maxContentLength for data: URLs (<a href="https://redirect.github.com/axios/axios/issues/7011">#7011</a>) (<a href="https://github.com/axios/axios/commit/945435fc51467303768202250debb8d4ae892593">945435f</a>)</li>
-<li>package exports (<a href="https://redirect.github.com/axios/axios/issues/5627">#5627</a>) (<a href="https://github.com/axios/axios/commit/aa78ac23fc9036163308c0f6bd2bb885e7af3f36">aa78ac2</a>)</li>
-<li><strong>params:</strong> removing [ and ] from URL encode exclude characters (<a href="https://redirect.github.com/axios/axios/issues/3316">#3316</a>) (<a href="https://redirect.github.com/axios/axios/issues/5715">#5715</a>) (<a href="https://github.com/axios/axios/commit/6d84189349c43b1dcdd977b522610660cc4c7042">6d84189</a>)</li>
-<li>release pr run (<a href="https://github.com/axios/axios/commit/fd7f404488b2c4f238c2fbe635b58026a634bfd2">fd7f404</a>)</li>
-<li><strong>types:</strong> change the type guard on isCancel (<a href="https://redirect.github.com/axios/axios/issues/5595">#5595</a>) (<a href="https://github.com/axios/axios/commit/0dbb7fd4f61dc568498cd13a681fa7f907d6ec7e">0dbb7fd</a>)</li>
-</ul>
-<h3>Features</h3>
-<ul>
-<li><strong>adapter:</strong> surface low‑level network error details; attach original error via cause (<a href="https://redirect.github.com/axios/axios/issues/6982">#6982</a>) (<a href="https://github.com/axios/axios/commit/78b290c57c978ed2ab420b90d97350231c9e5d74">78b290c</a>)</li>
-<li><strong>fetch:</strong> add fetch, Request, Response env config variables for the adapter; (<a href="https://redirect.github.com/axios/axios/issues/7003">#7003</a>) (<a href="https://github.com/axios/axios/commit/c959ff29013a3bc90cde3ac7ea2d9a3f9c08974b">c959ff2</a>)</li>
-<li>support reviver on JSON.parse (<a href="https://redirect.github.com/axios/axios/issues/5926">#5926</a>) (<a href="https://github.com/axios/axios/commit/2a9763426e43d996fd60d01afe63fa6e1f5b4fca">2a97634</a>), closes <a href="https://redirect.github.com/axios/axios/issues/5924">#5924</a></li>
-<li><strong>types:</strong> extend AxiosResponse interface to include custom headers type (<a href="https://redirect.github.com/axios/axios/issues/6782">#6782</a>) (<a href="https://github.com/axios/axios/commit/7960d34eded2de66ffd30b4687f8da0e46c4903e">7960d34</a>)</li>
-</ul>
-<h3>Contributors to this release</h3>
-<ul>
-<li><!-- raw HTML omitted --> <a href="https://github.com/WillianAgostini" title="+132/-16760 ([#7002](https://github.com/axios/axios/issues/7002) [#5926](https://github.com/axios/axios/issues/5926) [#6782](https://github.com/axios/axios/issues/6782) )">Willian Agostini</a></li>
-<li><!-- raw HTML omitted --> <a href="https://github.com/DigitalBrainJS" title="+4263/-293 ([#7006](https://github.com/axios/axios/issues/7006) [#7003](https://github.com/axios/axios/issues/7003) )">Dmitriy Mozgovoy</a></li>
-<li><!-- raw HTML omitted --> <a href="https://github.com/mkhani01" title="+111/-15 ([#6982](https://github.com/axios/axios/issues/6982) )">khani</a></li>
-<li><!-- raw HTML omitted --> <a href="https://github.com/AmeerAssadi" title="+123/-0 ([#7011](https://github.com/axios/axios/issues/7011) )">Ameer Assadi</a></li>
-<li><!-- raw HTML omitted --> <a href="https://github.com/emiedonmokumo" title="+55/-35 ([#6998](https://github.com/axios/axios/issues/6998) )">Emiedonmokumo Dick-Boro</a></li>
-<li><!-- raw HTML omitted --> <a href="https://github.com/opsysdebug" title="+8/-8 ([#6980](https://github.com/axios/axios/issues/6980) )">Zeroday BYTE</a></li>
-<li><!-- raw HTML omitted --> <a href="https://github.com/jasonsaayman" title="+7/-7 ([#6985](https://github.com/axios/axios/issues/6985) [#6985](https://github.com/axios/axios/issues/6985) )">Jason Saayman</a></li>
-<li><!-- raw HTML omitted --> <a href="https://github.com/HealGaren" title="+5/-7 ([#5715](https://github.com/axios/axios/issues/5715) )">최예찬</a></li>
-<li><!-- raw HTML omitted --> <a href="https://github.com/gligorkot" title="+3/-1 ([#5627](https://github.com/axios/axios/issues/5627) )">Gligor Kotushevski</a></li>
-<li><!-- raw HTML omitted --> <a href="https://github.com/adimit" title="+2/-1 ([#5595](https://github.com/axios/axios/issues/5595) )">Aleksandar Dimitrov</a></li>
-</ul>
+Combined dependabot updates including:
+- dotenv 16.6.1 → 17.2.3
+- jest 29.7.0 → 30.2.0
+- @azure/identity 4.10.2 → 4.12.0
+- axios 1.11.0 → 1.12.0
+- eslint 9.32.0 → 9.33.0
+- @eslint/js 9.32.0 → 9.33.0
+- actions/github-script 7 → 8
+- actions/checkout 4 → 5
+- azure/webapps-deploy 2 → 3
 ```
 
 
