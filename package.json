@@ -25,14 +25,13 @@
         "discord.js": "^14.17.3",
         "dotenv": "^17.2.3",
         "express": "^5.1.0",
-        "fbf-buddy": "file:",
         "pg": "^8.11.1",
         "sequelize": "^6.37.7"
     },
     "devDependencies": {
         "@eslint/js": "^9.33.0",
         "eslint": "^9.33.0",
-        "globals": "^16.0.0",
+        "globals": "^16.4.0",
         "jest": "^30.2.0",
         "nodemon": "^3.1.9"
     }
