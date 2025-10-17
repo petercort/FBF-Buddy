@@ -4,39 +4,41 @@
 ### Version 0.0.0
 
 #### semver:patch
-* PR [#123](https://github.com/petercort/FBF-Buddy/pull/123) - Bump @eslint/js from 9.32.0 to 9.33.0
+* PR [#131](https://github.com/petercort/FBF-Buddy/pull/131) - Bump axios from 1.11.0 to 1.12.0 in the npm_and_yarn group across 1 directory
 
 ```
-<h2>v9.33.0</h2>
-<h2>Features</h2>
+<h2>Release v1.12.0</h2>
+<h2>Release notes:</h2>
+<h3>Bug Fixes</h3>
 <ul>
-<li><a href="https://github.com/eslint/eslint/commit/e07820e66fd1fceaf2620dc931154955a706cc0f"><code>e07820e</code></a> feat: add global object access detection to no-restricted-globals (<a href="https://github.com/eslint/eslint/tree/HEAD/packages/js/issues/19939">#19939</a>) (sethamus)</li>
-<li><a href="https://github.com/eslint/eslint/commit/90b050ec11557cab08b6be9f05fabf97dba6a63d"><code>90b050e</code></a> feat: support explicit resource management in <code>one-var</code> (<a href="https://github.com/eslint/eslint/tree/HEAD/packages/js/issues/19941">#19941</a>) (Sweta Tanwar)</li>
+<li>adding build artifacts (<a href="https://github.com/axios/axios/commit/9ec86de257bfa33856571036279169f385ed92bd">9ec86de</a>)</li>
+<li>dont add dist on release (<a href="https://github.com/axios/axios/commit/a2edc3606a4f775d868a67bb3461ff18ce7ecd11">a2edc36</a>)</li>
+<li><strong>fetch-adapter:</strong> set correct Content-Type for Node FormData (<a href="https://redirect.github.com/axios/axios/issues/6998">#6998</a>) (<a href="https://github.com/axios/axios/commit/a9f47afbf3224d2ca987dbd8188789c7ea853c5d">a9f47af</a>)</li>
+<li><strong>node:</strong> enforce maxContentLength for data: URLs (<a href="https://redirect.github.com/axios/axios/issues/7011">#7011</a>) (<a href="https://github.com/axios/axios/commit/945435fc51467303768202250debb8d4ae892593">945435f</a>)</li>
+<li>package exports (<a href="https://redirect.github.com/axios/axios/issues/5627">#5627</a>) (<a href="https://github.com/axios/axios/commit/aa78ac23fc9036163308c0f6bd2bb885e7af3f36">aa78ac2</a>)</li>
+<li><strong>params:</strong> removing [ and ] from URL encode exclude characters (<a href="https://redirect.github.com/axios/axios/issues/3316">#3316</a>) (<a href="https://redirect.github.com/axios/axios/issues/5715">#5715</a>) (<a href="https://github.com/axios/axios/commit/6d84189349c43b1dcdd977b522610660cc4c7042">6d84189</a>)</li>
+<li>release pr run (<a href="https://github.com/axios/axios/commit/fd7f404488b2c4f238c2fbe635b58026a634bfd2">fd7f404</a>)</li>
+<li><strong>types:</strong> change the type guard on isCancel (<a href="https://redirect.github.com/axios/axios/issues/5595">#5595</a>) (<a href="https://github.com/axios/axios/commit/0dbb7fd4f61dc568498cd13a681fa7f907d6ec7e">0dbb7fd</a>)</li>
 </ul>
-<h2>Bug Fixes</h2>
+<h3>Features</h3>
 <ul>
-<li><a href="https://github.com/eslint/eslint/commit/732433c4fb023f45154b825cdc8cdaf1979d4336"><code>732433c</code></a> fix: allow any type for <code>meta.docs.recommended</code> in custom rules (<a href="https://github.com/eslint/eslint/tree/HEAD/packages/js/issues/19995">#19995</a>) (Francesco Trotta)</li>
-<li><a href="https://github.com/eslint/eslint/commit/e8a6914a249d036e12494004e586b2a2b6e104d1"><code>e8a6914</code></a> fix: Fixed potential bug in check-emfile-handling.js (<a href="https://github.com/eslint/eslint/tree/HEAD/packages/js/issues/19975">#19975</a>) (諏訪原慶斗)</li>
+<li><strong>adapter:</strong> surface low‑level network error details; attach original error via cause (<a href="https://redirect.github.com/axios/axios/issues/6982">#6982</a>) (<a href="https://github.com/axios/axios/commit/78b290c57c978ed2ab420b90d97350231c9e5d74">78b290c</a>)</li>
+<li><strong>fetch:</strong> add fetch, Request, Response env config variables for the adapter; (<a href="https://redirect.github.com/axios/axios/issues/7003">#7003</a>) (<a href="https://github.com/axios/axios/commit/c959ff29013a3bc90cde3ac7ea2d9a3f9c08974b">c959ff2</a>)</li>
+<li>support reviver on JSON.parse (<a href="https://redirect.github.com/axios/axios/issues/5926">#5926</a>) (<a href="https://github.com/axios/axios/commit/2a9763426e43d996fd60d01afe63fa6e1f5b4fca">2a97634</a>), closes <a href="https://redirect.github.com/axios/axios/issues/5924">#5924</a></li>
+<li><strong>types:</strong> extend AxiosResponse interface to include custom headers type (<a href="https://redirect.github.com/axios/axios/issues/6782">#6782</a>) (<a href="https://github.com/axios/axios/commit/7960d34eded2de66ffd30b4687f8da0e46c4903e">7960d34</a>)</li>
 </ul>
-<h2>Documentation</h2>
+<h3>Contributors to this release</h3>
 <ul>
-<li><a href="https://github.com/eslint/eslint/commit/34f0723e2d0faf8ac8dc95ec56e6d181bd6b67f2"><code>34f0723</code></a> docs: playground button for TypeScript code example (<a href="https://github.com/eslint/eslint/tree/HEAD/packages/js/issues/19671">#19671</a>) (Tanuj Kanti)</li>
-<li><a href="https://github.com/eslint/eslint/commit/dc942a47daf41228d69072c52f1be20789426862"><code>dc942a4</code></a> docs: Update README (GitHub Actions Bot)</li>
-<li><a href="https://github.com/eslint/eslint/commit/5a4b6f74320b72f9b6ad8b30f5c463b2b71315af"><code>5a4b6f7</code></a> docs: Update no-multi-assign.md (<a href="https://github.com/eslint/eslint/tree/HEAD/packages/js/issues/19979">#19979</a>) (Yuki Takada (Yukinosuke Takada))</li>
-<li><a href="https://github.com/eslint/eslint/commit/247e15698e34919a0cd411842fb3e14ac7a8f1ba"><code>247e156</code></a> docs: add missing let declarations in <code>no-plusplus</code> (<a href="https://github.com/eslint/eslint/tree/HEAD/packages/js/issues/19980">#19980</a>) (Yuki Takada (Yukinosuke Takada))</li>
-<li><a href="https://github.com/eslint/eslint/commit/0d17242b3c25c2ddf8363f4560641acd1ae82ca9"><code>0d17242</code></a> docs: Update README (GitHub Actions Bot)</li>
-<li><a href="https://github.com/eslint/eslint/commit/fa20b9db8ff90ea9f0527118114dda17c656d095"><code>fa20b9d</code></a> docs: Clarify when to open an issue for a PR (<a href="https://github.com/eslint/eslint/tree/HEAD/packages/js/issues/19974">#19974</a>) (Nicholas C. Zakas)</li>
-</ul>
-<h2>Build Related</h2>
-<ul>
-<li><a href="https://github.com/eslint/eslint/commit/27fa86551bd173387e29a139293de78b0e14f0f3"><code>27fa865</code></a> build: use <code>ESLint</code> class to generate formatter examples (<a href="https://github.com/eslint/eslint/tree/HEAD/packages/js/issues/19972">#19972</a>) (Milos Djermanovic)</li>
-</ul>
-<h2>Chores</h2>
-<ul>
-<li><a href="https://github.com/eslint/eslint/commit/425804602ecb9ee5f54d1c38a473cf20538420c5"><code>4258046</code></a> chore: update dependency <code>@​eslint/js</code> to v9.33.0 (<a href="https://github.com/eslint/eslint/tree/HEAD/packages/js/issues/19998">#19998</a>) (renovate[bot])</li>
-<li><a href="https://github.com/eslint/eslint/commit/ad283717ed4764a171120ca7c6cba82a78fa024c"><code>ad28371</code></a> chore: package.json update for <code>@​eslint/js</code> release (Jenkins)</li>
-<li><a href="https://github.com/eslint/eslint/commit/06a22f154c08ea044b3172b357b226d34dfefc6a"><code>06a22f1</code></a> test: resolve flakiness in --mcp flag test (<a href="https://github.com/eslint/eslint/tree/HEAD/packages/js/issues/19993">#19993</a>) (Pixel998)</li>
-<li><a href="https://github.com/eslint/eslint/commit/54920ed229693f23650dace6e567bf44413aaf98"><code>54920ed</code></a> test: switch to <code>Linter.Config</code> in <code>ESLintRules</code> type tests (<a href="https://github.com/eslint/eslint/tree/HEAD/packages/js/issues/19977">#19977</a>) (Francesco Trotta)</li>
+<li><!-- raw HTML omitted --> <a href="https://github.com/WillianAgostini" title="+132/-16760 ([#7002](https://github.com/axios/axios/issues/7002) [#5926](https://github.com/axios/axios/issues/5926) [#6782](https://github.com/axios/axios/issues/6782) )">Willian Agostini</a></li>
+<li><!-- raw HTML omitted --> <a href="https://github.com/DigitalBrainJS" title="+4263/-293 ([#7006](https://github.com/axios/axios/issues/7006) [#7003](https://github.com/axios/axios/issues/7003) )">Dmitriy Mozgovoy</a></li>
+<li><!-- raw HTML omitted --> <a href="https://github.com/mkhani01" title="+111/-15 ([#6982](https://github.com/axios/axios/issues/6982) )">khani</a></li>
+<li><!-- raw HTML omitted --> <a href="https://github.com/AmeerAssadi" title="+123/-0 ([#7011](https://github.com/axios/axios/issues/7011) )">Ameer Assadi</a></li>
+<li><!-- raw HTML omitted --> <a href="https://github.com/emiedonmokumo" title="+55/-35 ([#6998](https://github.com/axios/axios/issues/6998) )">Emiedonmokumo Dick-Boro</a></li>
+<li><!-- raw HTML omitted --> <a href="https://github.com/opsysdebug" title="+8/-8 ([#6980](https://github.com/axios/axios/issues/6980) )">Zeroday BYTE</a></li>
+<li><!-- raw HTML omitted --> <a href="https://github.com/jasonsaayman" title="+7/-7 ([#6985](https://github.com/axios/axios/issues/6985) [#6985](https://github.com/axios/axios/issues/6985) )">Jason Saayman</a></li>
+<li><!-- raw HTML omitted --> <a href="https://github.com/HealGaren" title="+5/-7 ([#5715](https://github.com/axios/axios/issues/5715) )">최예찬</a></li>
+<li><!-- raw HTML omitted --> <a href="https://github.com/gligorkot" title="+3/-1 ([#5627](https://github.com/axios/axios/issues/5627) )">Gligor Kotushevski</a></li>
+<li><!-- raw HTML omitted --> <a href="https://github.com/adimit" title="+2/-1 ([#5595](https://github.com/axios/axios/issues/5595) )">Aleksandar Dimitrov</a></li>
 </ul>
 ```
 
