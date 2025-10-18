@@ -145,3 +145,6 @@ secrets-store
 
 # Don't upload the powershell file as it contains secrets
 setupWebhookSub.ps1
+
+# Temporary files
+tmp/

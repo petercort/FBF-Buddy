@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  discord-bot:
+    build:
+      context: ./services/discord-bot
+      dockerfile: Dockerfile
+      args:
+        - KEY_VAULT_NAME=${KEY_VAULT_NAME}
+        - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+        - AZURE_TENANT_ID=${AZURE_TENANT_ID}
+        - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
+    container_name: fbf-buddy-discord-bot
+    environment:
+      - KEY_VAULT_NAME=${KEY_VAULT_NAME}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID}
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+    networks:
+      - fbf-network
+
+  backend:
+    build:
+      context: ./services/backend
+      dockerfile: Dockerfile
+      args:
+        - KEY_VAULT_NAME=${KEY_VAULT_NAME}
+        - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+        - AZURE_TENANT_ID=${AZURE_TENANT_ID}
+        - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
+        - DISCORD_BOT_API_URL=http://discord-bot:3001
+    container_name: fbf-buddy-backend
+    environment:
+      - KEY_VAULT_NAME=${KEY_VAULT_NAME}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID}
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
+      - DISCORD_BOT_API_URL=http://discord-bot:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - discord-bot
+    restart: unless-stopped
+    networks:
+      - fbf-network
+
+networks:
+  fbf-network:
+    driver: bridge

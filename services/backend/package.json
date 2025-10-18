@@ -1,0 +1,33 @@
+{
+    "name": "fbf-buddy-backend",
+    "private": true,
+    "version": "0.0.0",
+    "description": "FBF-Buddy Backend/API/Database Service",
+    "main": "src/app.js",
+    "type": "module",
+    "engines": {
+        "node": ">=20.x"
+    },
+    "scripts": {
+        "start": "node src/app.js",
+        "dev": "nodemon src/app.js",
+        "lint": "eslint src/**/*.js"
+    },
+    "author": "Peter Cort",
+    "license": "MIT",
+    "dependencies": {
+        "@azure/identity": "^4.13.0",
+        "@azure/keyvault-secrets": "^4.9.0",
+        "axios": "^1.12.0",
+        "dotenv": "^17.2.3",
+        "express": "^5.1.0",
+        "pg": "^8.11.1",
+        "sequelize": "^6.37.7"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.17.0",
+        "eslint": "^9.18.0",
+        "globals": "^16.0.0",
+        "nodemon": "^3.1.9"
+    }
+}
