@@ -153,6 +153,46 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     
+    # Enable Managed Identity on Discord Bot
+    - name: Enable Managed Identity on Discord Bot
+      run: |
+        az containerapp identity assign \
+          --name ${{ env.DISCORD_BOT_CONTAINER_APP }} \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --system-assigned
+        
+        # Get the principal ID
+        DISCORD_BOT_PRINCIPAL_ID=$(az containerapp identity show \
+          --name ${{ env.DISCORD_BOT_CONTAINER_APP }} \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --query principalId -o tsv)
+        
+        # Grant Key Vault access
+        az keyvault set-policy \
+          --name ${{ secrets.KEY_VAULT_NAME }} \
+          --object-id $DISCORD_BOT_PRINCIPAL_ID \
+          --secret-permissions get list
+    
+    # Enable Managed Identity on Backend
+    - name: Enable Managed Identity on Backend
+      run: |
+        az containerapp identity assign \
+          --name ${{ env.BACKEND_CONTAINER_APP }} \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --system-assigned
+        
+        # Get the principal ID
+        BACKEND_PRINCIPAL_ID=$(az containerapp identity show \
+          --name ${{ env.BACKEND_CONTAINER_APP }} \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --query principalId -o tsv)
+        
+        # Grant Key Vault access
+        az keyvault set-policy \
+          --name ${{ secrets.KEY_VAULT_NAME }} \
+          --object-id $BACKEND_PRINCIPAL_ID \
+          --secret-permissions get list
+    
     # Deploy Discord Bot
     - name: Deploy Discord Bot to Azure Container App
       uses: azure/container-apps-deploy-action@v1
@@ -162,9 +202,6 @@ jobs:
         imageToDeploy: ${{ needs.build.outputs.discord-bot-image }}:latest
         environmentVariables: |
           KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }}
-          AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}
-          AZURE_CLIENT_SECRET=secretref:azure-client-secret
     
     # Deploy Backend
     - name: Deploy Backend to Azure Container App
@@ -175,8 +212,5 @@ jobs:
         imageToDeploy: ${{ needs.build.outputs.backend-image }}:latest
         environmentVariables: |
           KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }}
-          AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}
-          AZURE_CLIENT_SECRET=secretref:azure-client-secret
           DISCORD_BOT_API_URL=http://fbf-buddy-discord-bot:3001
   

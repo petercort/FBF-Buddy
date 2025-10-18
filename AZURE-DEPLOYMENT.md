@@ -109,20 +109,87 @@ az containerapp create \
 
 Both services require the following environment variables:
 
-### Required for Azure Key Vault Access
+### Required for Azure Key Vault Access (Managed Identity - Recommended)
+
+**With Managed Identity (No credentials needed in production!):**
 - `KEY_VAULT_NAME` - Name of your Azure Key Vault
-- `AZURE_CLIENT_ID` - Service Principal Client ID
-- `AZURE_TENANT_ID` - Azure Tenant ID
-- `AZURE_CLIENT_SECRET` - Service Principal Secret (stored as secret)
+
+The application uses Azure Managed Identity to authenticate to Key Vault when running in Azure Container Apps. This eliminates the need to store credentials as environment variables or secrets.
+
+### For Local Development
+
+When running locally, `DefaultAzureCredential` falls back to:
+1. **Azure CLI** - Run `az login` before starting the app
+2. **Environment Variables** (if Azure CLI not available):
+   - `AZURE_CLIENT_ID` - Service Principal Client ID
+   - `AZURE_TENANT_ID` - Azure Tenant ID
+   - `AZURE_CLIENT_SECRET` - Service Principal Secret
 
 ### Backend-Specific
 - `DISCORD_BOT_API_URL` - Internal URL to Discord Bot service (http://fbf-buddy-discord-bot:3001)
+
+## Managed Identity Setup
+
+### Initial Setup (One-Time)
+
+Run the provided script to enable Managed Identity and grant Key Vault access:
+
+```bash
+export KEY_VAULT_NAME=peter-corp-dev
+./enable-managed-identity.sh
+```
+
+Or manually:
+
+```bash
+# Enable Managed Identity on Discord Bot
+az containerapp identity assign \
+  --name fbf-buddy-discord-bot \
+  --resource-group peter-corp-rg \
+  --system-assigned
+
+# Get the principal ID
+DISCORD_BOT_PRINCIPAL_ID=$(az containerapp identity show \
+  --name fbf-buddy-discord-bot \
+  --resource-group peter-corp-rg \
+  --query principalId -o tsv)
+
+# Grant Key Vault access
+az keyvault set-policy \
+  --name peter-corp-dev \
+  --object-id $DISCORD_BOT_PRINCIPAL_ID \
+  --secret-permissions get list
+
+# Repeat for Backend
+az containerapp identity assign \
+  --name fbf-buddy-backend \
+  --resource-group peter-corp-rg \
+  --system-assigned
+
+BACKEND_PRINCIPAL_ID=$(az containerapp identity show \
+  --name fbf-buddy-backend \
+  --resource-group peter-corp-rg \
+  --query principalId -o tsv)
+
+az keyvault set-policy \
+  --name peter-corp-dev \
+  --object-id $BACKEND_PRINCIPAL_ID \
+  --secret-permissions get list
+```
+
+### Benefits of Managed Identity
+
+✅ **No secrets to manage** - Azure handles authentication automatically  
+✅ **Automatic rotation** - Credentials are managed by Azure  
+✅ **More secure** - No credentials in environment variables or secrets  
+✅ **Simpler deployment** - Only need `KEY_VAULT_NAME` environment variable  
+
 
 ## GitHub Secrets Required
 
 Configure these secrets in your GitHub repository:
 
-1. **AZURE_CREDENTIALS** - Azure service principal credentials (JSON format):
+1. **AZURE_CREDENTIALS** - Azure service principal credentials for GitHub Actions (JSON format):
    ```json
    {
      "clientId": "your-client-id",
@@ -131,11 +198,18 @@ Configure these secrets in your GitHub repository:
      "tenantId": "your-tenant-id"
    }
    ```
+   
+   **Note**: This is only used by GitHub Actions to deploy to Azure. The deployed Container Apps use Managed Identity instead.
 
-2. **KEY_VAULT_NAME** - Your Azure Key Vault name
-3. **AZURE_CLIENT_ID** - Service Principal Client ID
-4. **AZURE_TENANT_ID** - Azure Tenant ID  
-5. **AZURE_CLIENT_SECRET** - Service Principal Secret
+2. **KEY_VAULT_NAME** - Your Azure Key Vault name (e.g., `peter-corp-dev`)
+
+### Optional (Only for local development without Azure CLI)
+
+These are NOT needed for production deployments with Managed Identity:
+
+3. **AZURE_CLIENT_ID** - Service Principal Client ID (for local dev only)
+4. **AZURE_TENANT_ID** - Azure Tenant ID (for local dev only)
+5. **AZURE_CLIENT_SECRET** - Service Principal Secret (for local dev only)
 
 ## Continuous Deployment
 
@@ -144,7 +218,8 @@ The GitHub Actions workflow (`.github/workflows/release-event-buddy.yml`) automa
 1. Builds both Docker images on push to `main` branch
 2. Pushes images to GitHub Container Registry
 3. Creates a GitHub release
-4. Deploys both services to Azure Container Apps
+4. **Enables Managed Identity and grants Key Vault access** (if not already enabled)
+5. Deploys both services to Azure Container Apps
 
 ## Monitoring and Logs
 
@@ -210,15 +285,59 @@ az containerapp update \
    az containerapp show --name <app-name> --resource-group peter-corp-rg --query "properties.template.containers[0].env"
    ```
 
-3. Check Key Vault access:
-   - Ensure service principal has `get` and `list` permissions on secrets
-   - Verify Key Vault name is correct
+3. Check Managed Identity and Key Vault access:
+   ```bash
+   # Verify Managed Identity is enabled
+   az containerapp identity show --name <app-name> --resource-group peter-corp-rg
+   
+   # Check Key Vault access policies
+   az keyvault show --name peter-corp-dev --query "properties.accessPolicies"
+   ```
 
 ### Authentication Issues
 
-If you see `ManagedIdentityCredential` or Key Vault authentication errors:
+If you see `ManagedIdentityCredential` authentication errors:
 
-**Note**: This application uses **ClientSecretCredential** (Service Principal) authentication, NOT Managed Identity. The environment variables `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_CLIENT_SECRET` must be properly set in your Container App.
+**Solution 1: Ensure Managed Identity is enabled and has Key Vault access**
+
+```bash
+# Run the setup script
+export KEY_VAULT_NAME=peter-corp-dev
+./enable-managed-identity.sh
+```
+
+**Solution 2: Check if Managed Identity has correct permissions**
+
+```bash
+# Get the Managed Identity principal ID
+PRINCIPAL_ID=$(az containerapp identity show \
+  --name fbf-buddy-backend \
+  --resource-group peter-corp-rg \
+  --query principalId -o tsv)
+
+# Grant Key Vault access
+az keyvault set-policy \
+  --name peter-corp-dev \
+  --object-id $PRINCIPAL_ID \
+  --secret-permissions get list
+```
+
+### For Local Development
+
+If authentication fails locally:
+
+1. **Use Azure CLI** (easiest):
+   ```bash
+   az login
+   ```
+
+2. **Or set environment variables**:
+   ```bash
+   export KEY_VAULT_NAME=peter-corp-dev
+   export AZURE_TENANT_ID=your-tenant-id
+   export AZURE_CLIENT_ID=your-client-id
+   export AZURE_CLIENT_SECRET=your-client-secret
+   ```
 
 ```bash
 # Grant Key Vault access to service principal
