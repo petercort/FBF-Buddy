@@ -216,7 +216,9 @@ az containerapp update \
 
 ### Authentication Issues
 
-If you see Key Vault authentication errors:
+If you see `ManagedIdentityCredential` or Key Vault authentication errors:
+
+**Note**: This application uses **ClientSecretCredential** (Service Principal) authentication, NOT Managed Identity. The environment variables `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_CLIENT_SECRET` must be properly set in your Container App.
 
 ```bash
 # Grant Key Vault access to service principal
@@ -224,6 +226,13 @@ az keyvault set-policy \
   --name peter-corp-dev \
   --spn <AZURE_CLIENT_ID> \
   --secret-permissions get list
+
+# Verify environment variables are set correctly
+az containerapp show \
+  --name fbf-buddy-backend \
+  --resource-group peter-corp-rg \
+  --query "properties.template.containers[0].env" \
+  --output table
 ```
 
 ### Image Pull Issues
