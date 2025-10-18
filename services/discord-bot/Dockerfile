@@ -15,11 +15,11 @@ ENV KEY_VAULT_NAME=$KEY_VAULT_NAME
 # Set the working directory
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json
-COPY package.json package-lock.json* ./
+# Copy package.json and package-lock.json if exists
+COPY package.json ./
 
-# Install dependencies
-RUN npm ci --omit=dev || npm install --omit=dev
+# Install dependencies without lockfile to avoid npm issues
+RUN npm install --omit=dev --no-package-lock
 
 # Copy the rest of the application code
 COPY . .
