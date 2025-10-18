@@ -1,7 +1,7 @@
 {
     "name": "fbf-buddy",
     "private": true,
-    "version": "1.5.5",
+    "version": "1.5.11",
     "description": "Cycling event app for Discord - Microservices Monorepo",
     "type": "module",
     "engines": {
@@ -17,10 +17,9 @@
         "test": "NODE_OPTIONS=--experimental-vm-modules jest",
         "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
         "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
-        "lint": "npm run lint:bot && npm run lint:backend && npm run lint:root",
+        "lint": "npm run lint:bot && npm run lint:backend",
         "lint:bot": "cd services/discord-bot && npm run lint",
         "lint:backend": "cd services/backend && npm run lint",
-        "lint:root": "eslint src/**/*.js",
         "install:all": "npm install && cd services/discord-bot && npm install && cd ../backend && npm install"
     },
     "author": "Peter Cort",
