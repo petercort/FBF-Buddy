@@ -6,9 +6,11 @@ on:
       - main
       
 env:
-  IMAGE_NAME: fbf-buddy
+  DISCORD_BOT_IMAGE_NAME: fbf-buddy-discord-bot
+  BACKEND_IMAGE_NAME: fbf-buddy-backend
   RESOURCE_GROUP: peter-corp-rg
-  CONTAINER_APP_NAME: discord-buddy
+  DISCORD_BOT_CONTAINER_APP: fbf-buddy-discord-bot
+  BACKEND_CONTAINER_APP: fbf-buddy-backend
 
 jobs:
   build:
@@ -16,9 +18,11 @@ jobs:
     permissions:
       contents: write
       packages: write
+      id-token: write
     outputs:
       version: ${{ steps.release-version.outputs.VERSION }}
-      image-id: ${{ steps.push-image.outputs.IMAGE_ID }}
+      discord-bot-image: ${{ steps.push-discord-bot.outputs.IMAGE_ID }}
+      backend-image: ${{ steps.push-backend.outputs.IMAGE_ID }}
     steps:
     - name: checkout 
       uses: actions/checkout@v5
@@ -29,35 +33,66 @@ jobs:
       run: |
         VERSION=$(jq -r .version package.json)
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-    - name: Build image
-      run: docker build --build-arg KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }} 
-        --build-arg AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} 
-        --build-arg AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} 
-        --build-arg AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }} 
-        --file Dockerfile 
-        --tag $IMAGE_NAME 
-        --label "runnumber=${GITHUB_RUN_ID}" 
-        -t fbf-buddy . 
+    
+    # Build Discord Bot
+    - name: Build Discord Bot image
+      run: |
+        docker build \
+          --build-arg KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }} \
+          --build-arg AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} \
+          --build-arg AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} \
+          --build-arg AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }} \
+          --file services/discord-bot/Dockerfile \
+          --tag $DISCORD_BOT_IMAGE_NAME \
+          --label "version=${{ steps.release-version.outputs.VERSION }}" \
+          --label "runnumber=${GITHUB_RUN_ID}" \
+          services/discord-bot
+    
+    # Build Backend
+    - name: Build Backend image
+      run: |
+        docker build \
+          --build-arg KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }} \
+          --build-arg AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} \
+          --build-arg AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} \
+          --build-arg AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }} \
+          --build-arg DISCORD_BOT_API_URL=http://fbf-buddy-discord-bot:3001 \
+          --file services/backend/Dockerfile \
+          --tag $BACKEND_IMAGE_NAME \
+          --label "version=${{ steps.release-version.outputs.VERSION }}" \
+          --label "runnumber=${GITHUB_RUN_ID}" \
+          services/backend
+    
     - name: Log in to registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-    - name: Push image with multiple tags
-      id: push-image
+    # Push Discord Bot
+    - name: Push Discord Bot image
+      id: push-discord-bot
       env: 
         VERSION: ${{ steps.release-version.outputs.VERSION }}
       run: |
-        IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
+        IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$DISCORD_BOT_IMAGE_NAME
         IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
 
-        echo IMAGE_ID=$IMAGE_ID
-        echo VERSION=$VERSION
         echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_OUTPUT
+        docker tag $DISCORD_BOT_IMAGE_NAME $IMAGE_ID:$VERSION
+        docker tag $DISCORD_BOT_IMAGE_NAME $IMAGE_ID:latest
+        docker push $IMAGE_ID:$VERSION
+        docker push $IMAGE_ID:latest
 
-        # Tag the image with both the version and 'latest'
-        docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
-        docker tag $IMAGE_NAME $IMAGE_ID:latest
+    # Push Backend
+    - name: Push Backend image
+      id: push-backend
+      env: 
+        VERSION: ${{ steps.release-version.outputs.VERSION }}
+      run: |
+        IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$BACKEND_IMAGE_NAME
+        IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
 
-        # Push both tags
+        echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_OUTPUT
+        docker tag $BACKEND_IMAGE_NAME $IMAGE_ID:$VERSION
+        docker tag $BACKEND_IMAGE_NAME $IMAGE_ID:latest
         docker push $IMAGE_ID:$VERSION
         docker push $IMAGE_ID:latest
 
@@ -82,14 +117,41 @@ jobs:
   deploy:
     needs: [build, create-release]
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
     - name: Azure login
       uses: azure/login@v2
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
-    - name: Deploy FBF Buddy 
-      uses: azure/webapps-deploy@v3
+        
+    - name: Register Microsoft.App resource provider
+      run: az provider register -n Microsoft.App --wait
+    
+    # Deploy Discord Bot
+    - name: Deploy Discord Bot to Azure Container App
+      uses: azure/container-apps-deploy-action@v1
       with:
-        app-name: 'discord-buddy'
-        images: 'ghcr.io/${{ needs.build.outputs.image-id }}:latest'
+        containerAppName: ${{ env.DISCORD_BOT_CONTAINER_APP }}
+        resourceGroup: ${{ env.RESOURCE_GROUP }}
+        imageToDeploy: ${{ needs.build.outputs.discord-bot-image }}:latest
+        environmentVariables: |
+          KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }}
+          AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_SECRET=secretref:azure-client-secret
+    
+    # Deploy Backend
+    - name: Deploy Backend to Azure Container App
+      uses: azure/container-apps-deploy-action@v1
+      with:
+        containerAppName: ${{ env.BACKEND_CONTAINER_APP }}
+        resourceGroup: ${{ env.RESOURCE_GROUP }}
+        imageToDeploy: ${{ needs.build.outputs.backend-image }}:latest
+        environmentVariables: |
+          KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }}
+          AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_SECRET=secretref:azure-client-secret
+          DISCORD_BOT_API_URL=http://fbf-buddy-discord-bot:3001
   
