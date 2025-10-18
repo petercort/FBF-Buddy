@@ -20,7 +20,7 @@ jobs:
       packages: write
       id-token: write
     outputs:
-      version: ${{ steps.release-version.outputs.VERSION }}
+      version: ${{ steps.increment-version.outputs.NEW_VERSION }}
       discord-bot-image: ${{ steps.push-discord-bot.outputs.IMAGE_ID }}
       backend-image: ${{ steps.push-backend.outputs.IMAGE_ID }}
     steps:
@@ -28,11 +28,48 @@ jobs:
       uses: actions/checkout@v5
       with:
         fetch-depth: 0
-    - name: Get release version
-      id: release-version
+    
+    - name: Get previous version and increment
+      id: increment-version
       run: |
-        VERSION=$(jq -r .version package.json)
-        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        # Get the latest git tag that matches a version pattern
+        if PREV_VERSION=$(git describe --tags --match="[0-9]*.[0-9]*.[0-9]*" --abbrev=0 HEAD 2>/dev/null); then
+          echo "Previous version: $PREV_VERSION"
+        else
+          PREV_VERSION="0.0.0"
+          echo "No previous version found, starting from: $PREV_VERSION"
+        fi
+        
+        # Parse version components
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$PREV_VERSION"
+        
+        # Increment patch version
+        PATCH=$((PATCH + 1))
+        
+        # Create new version
+        NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+        echo "New version: $NEW_VERSION"
+        echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+    
+    - name: Update version files
+      run: |
+        NEW_VERSION=${{ steps.increment-version.outputs.NEW_VERSION }}
+        
+        # Update package.json
+        sed -i 's/"version": "[^"]*"/"version": "'$NEW_VERSION'"/' package.json
+        
+        # Update app.version
+        echo "$NEW_VERSION" > app.version
+        
+        echo "Updated package.json and app.version to version $NEW_VERSION"
+    
+    - name: Commit version updates
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add package.json app.version
+        git commit -m "chore: bump version to ${{ steps.increment-version.outputs.NEW_VERSION }}" || echo "No changes to commit"
+        git push || echo "No changes to push"
     
     # Build Discord Bot
     - name: Build Discord Bot image
@@ -40,7 +77,7 @@ jobs:
         docker build \
           --file services/discord-bot/Dockerfile \
           --tag $DISCORD_BOT_IMAGE_NAME \
-          --label "version=${{ steps.release-version.outputs.VERSION }}" \
+          --label "version=${{ steps.increment-version.outputs.NEW_VERSION }}" \
           --label "runnumber=${GITHUB_RUN_ID}" \
           services/discord-bot
     
@@ -50,7 +87,7 @@ jobs:
         docker build \
           --file services/backend/Dockerfile \
           --tag $BACKEND_IMAGE_NAME \
-          --label "version=${{ steps.release-version.outputs.VERSION }}" \
+          --label "version=${{ steps.increment-version.outputs.NEW_VERSION }}" \
           --label "runnumber=${GITHUB_RUN_ID}" \
           services/backend
     
@@ -61,7 +98,7 @@ jobs:
     - name: Push Discord Bot image
       id: push-discord-bot
       env: 
-        VERSION: ${{ steps.release-version.outputs.VERSION }}
+        VERSION: ${{ steps.increment-version.outputs.NEW_VERSION }}
       run: |
         IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$DISCORD_BOT_IMAGE_NAME
         IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
@@ -76,7 +113,7 @@ jobs:
     - name: Push Backend image
       id: push-backend
       env: 
-        VERSION: ${{ steps.release-version.outputs.VERSION }}
+        VERSION: ${{ steps.increment-version.outputs.NEW_VERSION }}
       run: |
         IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$BACKEND_IMAGE_NAME
         IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')

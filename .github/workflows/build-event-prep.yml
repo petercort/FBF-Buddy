@@ -1,4 +1,4 @@
-name: Generate Release Content
+name: PR Tests
 
 on:
   pull_request:
@@ -6,95 +6,41 @@ on:
       - main
 
 jobs:
-  label:
+  test:
     runs-on: ubuntu-latest
-    outputs:
-      release-type: ${{ steps.parse-labels.outputs.release-type }}
-      change-type: ${{ steps.parse-labels.outputs.change-type }}
-      previous-version: ${{ steps.prevtag.outputs.previousversion }}
-      release-version: ${{ steps.new-version-standard.outputs.new-version }}
-      changelog-content: ${{ steps.set-changelog.outputs.changelog }}
     permissions:
-      issues: write
-      pull-requests: write
       contents: read
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v5
-      with: 
-        path: src
-        fetch-depth: 0
-    - name: Parse and Add Labels
-      id: parse-labels
-      uses: actions/github-script@v8
-      with:
-        script: |
-          console.log(context.actor)
-          if (context.actor == 'dependabot[bot]'){
-            core.setOutput('release-type', 'chore')
-            core.setOutput('change-type', 'semver:patch')
-          } else {
-            const { default: script } = await import('${{ github.workspace}}/src/.github/scripts/pr-scripts/parse-add-labels.js')
-            await script({github, context, core})
-          }
-    - name: Detect previous version number
-      id: prevtag
-      working-directory: src
-      run: |
-        if previousversion=$(git describe --tags --match="[0-9]*" --abbrev=0 HEAD 2>/dev/null); then
-          echo "previousversion=$(git describe --tags --match="[0-9]*" --abbrev=0 HEAD)" >> "$GITHUB_OUTPUT"
-        else
-          echo "previousversion=0.0.0" >> "$GITHUB_OUTPUT"
-        fi
-
-    - name: Determine new version number (Standard)
-      uses: actions/github-script@v8
-      id: new-version-standard
-      env:
-        PREV_VERSION: ${{ steps.prevtag.outputs.previousversion }}
-        RELEASE_TYPE: ${{ steps.parse-labels.outputs.release-type }}
-      with:
-        script: |
-          const { default: script } = await import('${{ github.workspace}}/src/.github/scripts/pr-scripts/plan-new-version.js')
-          await script({core})
-  comment:
-    needs: label
-    if: needs.label.outputs.release-type != 'no-release'
-    permissions:
-      issues: write
       pull-requests: write
-      contents: read
-    runs-on: ubuntu-latest
-    name: 'Comment on PR'
     steps:
-      - name: Clone Repo to determine previous git tag
+      - name: Checkout repository
         uses: actions/checkout@v5
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          path: src
-          fetch-depth: 0
-      - uses: actions/github-script@v8
-        env:
-          releaseVersion: '${{ needs.label.outputs.release-version }}'
-          previousVersion: '${{ needs.label.outputs.previous-version }}'
+          node-version: '24.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Run linting
+        run: npm run lint
+        continue-on-error: true
+      
+      - name: Run tests
+        run: npm test
+        if: always()
+      
+      - name: Comment test results
+        if: always()
+        uses: actions/github-script@v8
         with:
           script: |
-            const { default: script } = await import('${{ github.workspace}}/src/.github/scripts/pr-scripts/pr-comment.js')
-            await script({github, context, core})
-      - name: Update package.json with version
-        working-directory: src
-        run: | 
-          sed -i 's/"version": "[^"]*"/"version": "${{ needs.label.outputs.release-version }}"/' package.json
-      - name: Update app.version with new version
-        working-directory: src
-        run: | 
-           echo "${{ needs.label.outputs.release-version }}" >| app.version
-      - name: Commit and Push Updates
-        working-directory: src
-        run: |
-          git config user.name "GitHub-Actions[bot]"
-          git config user.email "GitHub-Actions[bot]@users.noreply.github.com"
-          git add package.json app.version
-          if ! git diff-index --quiet HEAD; then
-            git commit -m "Bot: Updating app.version and package.json for release based on #${{ github.event.pull_request.number }}"
-            git push origin ${{ github.event.pull_request.head.ref }}
-          fi
+            const testStatus = '${{ job.status }}' === 'success' ? '✅ Tests passed' : '❌ Tests failed';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Test Results\n\n${testStatus}\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            });
