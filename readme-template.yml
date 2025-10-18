@@ -37,4 +37,4 @@ readme:
   owner_maintainers:
     - '@petercort'
   known_issues:
-    - "No known issues"
+    - "validator.js URL validation bypass (CVE-2025-56200) - Low risk, transitive dependency only. See [SECURITY.md](SECURITY.md) for details."

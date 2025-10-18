@@ -39,7 +39,7 @@ docker-compose up --build
 | /get_last_ride | none | Returns the last ride you did according to Strava | /get_last_ride | Returns info on the last ride you did. |
 
   ## Known Issues
-  - No known issues
+  - validator.js URL validation bypass (CVE-2025-56200) - Low risk, transitive dependency only. See [SECURITY.md](SECURITY.md) for details.
 
   ## Owner Maintainers
   - @petercort
