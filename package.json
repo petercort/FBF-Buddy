@@ -18,7 +18,8 @@
         "lint:bot": "cd services/discord-bot && npm run lint",
         "lint:backend": "cd services/backend && npm run lint",
         "lint:root": "eslint src/**/*.js",
-        "install:all": "npm install && cd services/discord-bot && npm install && cd ../backend && npm install"
+        "install:all": "npm install && cd services/discord-bot && npm install && cd ../backend && npm install",
+        "security:check": "node .github/scripts/check-validator-security.js"
     },
     "author": "Peter Cort",
     "license": "MIT",

@@ -41,6 +41,13 @@ This vulnerability has **minimal impact** on FBF-Buddy because:
 1. Monitor validator.js repository for security patches
 2. Update Sequelize when a version using patched validator.js is available
 3. Regularly run `npm audit` to check for resolved vulnerabilities
+4. Run `npm run security:check` to check for validator.js updates
+
+#### Monitoring
+Run the security check script to monitor for updates:
+```bash
+npm run security:check
+```
 
 ---
 
