@@ -152,9 +152,6 @@ jobs:
       uses: azure/login@v2
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
-        
-    - name: Register Microsoft.App resource provider
-      run: az provider register -n Microsoft.App --wait
     
     # Deploy Discord Bot
     - name: Deploy Discord Bot to Azure Container App
