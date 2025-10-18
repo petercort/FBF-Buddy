@@ -1,7 +1,7 @@
 # Changelog
 
 
-### Version 0.0.0
+### Version 1.5.5
 
 #### semver:patch
 * PR [#131](https://github.com/petercort/FBF-Buddy/pull/131) - Bump axios from 1.11.0 to 1.12.0 in the npm_and_yarn group across 1 directory
@@ -282,4 +282,5 @@ Enhanced deploys to auto deploy the latest rather than waiting for whatever Azur
 ### Version 0.0.1
 
 #### enhancement
+
 * PR [#6](https://github.com/petercort/FBF-Event-Buddy/pull/6) - Update TERMS.md
