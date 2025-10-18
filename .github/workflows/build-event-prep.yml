@@ -57,16 +57,6 @@ jobs:
         script: |
           const { default: script } = await import('${{ github.workspace}}/src/.github/scripts/pr-scripts/plan-new-version.js')
           await script({core})
-    - name: Extract changelog entry
-      uses: actions/github-script@v8
-      id: set-changelog
-      env: 
-        releaseversion: ${{ steps.new-version-standard.outputs.new-version }}
-        changetype: ${{ steps.parse-labels.outputs.change-type }}
-      with:
-        script: |
-          const { default: script } = await import('${{ github.workspace}}/src/.github/scripts/pr-scripts/plan-changelog.js')
-          await script({github, context, core})
   comment:
     needs: label
     if: needs.label.outputs.release-type != 'no-release'
@@ -86,64 +76,10 @@ jobs:
         env:
           releaseVersion: '${{ needs.label.outputs.release-version }}'
           previousVersion: '${{ needs.label.outputs.previous-version }}'
-          changelogContent: '${{ needs.label.outputs.changelog-content }}'
         with:
           script: |
             const { default: script } = await import('${{ github.workspace}}/src/.github/scripts/pr-scripts/pr-comment.js')
             await script({github, context, core})
-  update-files:
-    needs: label
-    permissions:
-      issues: write
-      pull-requests: write
-      contents: write
-    runs-on: ubuntu-latest
-    name: 'Update release files.'
-    steps:  
-      - name: "Checkout Repository"
-        uses: actions/checkout@v5
-        with:
-          path: src
-          fetch-depth: 0
-          ref: 'main'
-      - name: Fetch Release Notes
-        id: fetch-release-notes
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-            const readFile = (filePath) => fs.readFileSync(filePath, 'utf-8').trim();
-
-            const changelogPath = 'src/CHANGELOG.md';
-            const changelogContent = readFile(changelogPath);
-
-            core.setOutput('existing-changelog', changelogContent);
-      - name: Prepend New Changelog Content
-        id: prepend-changelog
-        run: |
-          mkdir -p tmp && cd tmp
-          echo "# Changelog" > updated-changelog.md
-          echo "" >> updated-changelog.md
-          echo '${{ needs.label.outputs.changelog-content }}' >> updated-changelog.md
-          echo '${{ steps.fetch-release-notes.outputs.existing-changelog }}' | sed '1d' >> updated-changelog.md
-      - name: Install js-yaml
-        working-directory: src
-        run: |
-          npm install js-yaml --save
-      - name: Generate README content
-        uses: actions/github-script@v8
-        with: 
-          script: |
-            const { default: script } = await import('${{ github.workspace }}/src/.github/scripts/generate-readme.js')
-
-            await script()
-      - name: Checkout Pull Request Branch Again
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-          path: src
       - name: Update package.json with version
         working-directory: src
         run: | 
@@ -157,10 +93,8 @@ jobs:
         run: |
           git config user.name "GitHub-Actions[bot]"
           git config user.email "GitHub-Actions[bot]@users.noreply.github.com"
-          cp ${{ github.workspace }}/tmp/updated-changelog.md CHANGELOG.md
-          cp ${{ github.workspace }}/tmp/new-README.md README.md
-          git add CHANGELOG.md README.md package.json app.version
+          git add package.json app.version
           if ! git diff-index --quiet HEAD; then
-            git commit -m "Bot: Updating CHANGELOG, README, app.version and package.json for release based on #${{ github.event.pull_request.number }}"
+            git commit -m "Bot: Updating app.version and package.json for release based on #${{ github.event.pull_request.number }}"
             git push origin ${{ github.event.pull_request.head.ref }}
           fi
