@@ -1,11 +1,11 @@
 {
     "name": "fbf-buddy",
     "private": true,
-    "version": "0.0.0",
+    "version": "1.0.0",
     "description": "Cycling event app for Discord - Microservices Monorepo",
     "type": "module",
     "engines": {
-        "node": ">=20.x"
+        "node": ">=24.x"
     },
     "scripts": {
         "start": "docker-compose up",

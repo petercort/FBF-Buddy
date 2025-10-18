@@ -1,5 +1,5 @@
 # Use the official Node.js image as the base image
-FROM node:23-slim
+FROM node:24-slim
 
 # Define an environment variable for the secret
 ARG KEY_VAULT_NAME
