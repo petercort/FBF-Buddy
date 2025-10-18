@@ -7,6 +7,28 @@
 
   A discord app that helps with random tasks in the FBF discord!
 
+  ## Architecture
+
+This application uses a microservices architecture:
+
+```
+┌─────────────┐      ┌─────────────────────────┐
+│ Discord Bot │ ◀─▶ │   Backend/API/DB        │
+└─────────────┘      └─────────────────────────┘
+```
+
+- **Discord Bot Service** (`services/discord-bot/`): Handles Discord interactions and commands
+- **Backend Service** (`services/backend/`): Manages API endpoints, webhooks, and database operations
+
+See [services/README.md](services/README.md) for more details on running and developing the services.
+
+### Quick Start
+
+```bash
+docker-compose up --build
+```
+
+
   | Command | Inputs | Description | Example | Output |
 | ------- | ------ | ----------- | ------- | ------ |
 | /connect_strava | None | User authorizes access to the Strava app to collect information about your bikes. Permissions: scope=read, activity:read_all, profile:read_all | /connect_strava | A link to connect to Strava |

@@ -30,6 +30,8 @@ export default function script() {
 
   ${config.readme.summary}
 
+  ${config.readme.architecture || ''}
+
   ${config.readme.commands}
   ## Known Issues
   ${config.readme.known_issues.map(issue => `- ${issue}`).join('\n')}
