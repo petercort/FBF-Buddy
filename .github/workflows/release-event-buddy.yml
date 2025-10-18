@@ -38,10 +38,6 @@ jobs:
     - name: Build Discord Bot image
       run: |
         docker build \
-          --build-arg KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }} \
-          --build-arg AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} \
-          --build-arg AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} \
-          --build-arg AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }} \
           --file services/discord-bot/Dockerfile \
           --tag $DISCORD_BOT_IMAGE_NAME \
           --label "version=${{ steps.release-version.outputs.VERSION }}" \
@@ -52,11 +48,6 @@ jobs:
     - name: Build Backend image
       run: |
         docker build \
-          --build-arg KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }} \
-          --build-arg AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} \
-          --build-arg AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} \
-          --build-arg AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }} \
-          --build-arg DISCORD_BOT_API_URL=http://fbf-buddy-discord-bot:3001 \
           --file services/backend/Dockerfile \
           --tag $BACKEND_IMAGE_NAME \
           --label "version=${{ steps.release-version.outputs.VERSION }}" \
