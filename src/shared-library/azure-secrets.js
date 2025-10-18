@@ -1,5 +1,5 @@
 import { SecretClient } from '@azure/keyvault-secrets';
-import { ClientSecretCredential } from '@azure/identity';
+import { DefaultAzureCredential } from '@azure/identity';
 
 let azureClient;
 
