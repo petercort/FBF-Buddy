@@ -1,5 +1,5 @@
 # Use the official Node.js image as the base image
-FROM node:23-slim
+FROM node:24-slim
 
 # Define environment variables for Azure secrets
 ARG KEY_VAULT_NAME
