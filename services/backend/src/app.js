@@ -40,6 +40,10 @@ try {
   process.exit(1);
 }
 
+// Track service readiness
+let isReady = false;
+let isHealthy = true;
+
 // Helper function to send Discord messages via the Discord bot service
 async function sendDiscordMessage(userId, message) {
   try {
@@ -53,9 +57,77 @@ async function sendDiscordMessage(userId, message) {
   }
 }
 
+// Health check endpoints
 app.get('/', (req, res) => {
-  // send a 200 response to the root path
+  // Basic root path response
   res.sendStatus(200);
+});
+
+app.get('/health', (req, res) => {
+  // Liveness probe - checks if the service is alive
+  if (!isHealthy) {
+    return res.status(503).json({
+      status: 'unhealthy',
+      service: 'backend',
+      timestamp: new Date().toISOString()
+    });
+  }
+  
+  res.json({
+    status: 'healthy',
+    service: 'backend',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/ready', async (req, res) => {
+  // Readiness probe - checks if the service is ready to accept traffic
+  const checks = {
+    keyVault: false,
+    database: false
+  };
+  
+  try {
+    // Check Key Vault connection
+    if (azureClient) {
+      checks.keyVault = true;
+    }
+    
+    // Check database connection
+    const { sequelize } = await import('./db-objects.js');
+    await sequelize.authenticate();
+    checks.database = true;
+    
+    const allChecksPass = Object.values(checks).every(check => check === true);
+    
+    if (!allChecksPass) {
+      return res.status(503).json({
+        status: 'not ready',
+        service: 'backend',
+        checks,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // Mark service as ready
+    isReady = true;
+    
+    res.json({
+      status: 'ready',
+      service: 'backend',
+      checks,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Readiness check failed:', error.message);
+    res.status(503).json({
+      status: 'not ready',
+      service: 'backend',
+      checks,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 app.post('/webhook', async (req, res) => {
