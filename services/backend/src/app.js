@@ -133,8 +133,182 @@ app.get('/strava/callback/:userId', async (req, res) => {
   return res.send('Strava account connected successfully!');
 });
 
+// ============================================
+// REST API Endpoints for Discord Bot
+// ============================================
+
+// Get user by Discord user ID
+app.get('/api/users/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await UsersTable.findOne({ where: { userId } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Create or update user
+app.post('/api/users', async (req, res) => {
+  try {
+    const { userId, strava_connected, strava_user_id, strava_access_token, strava_refresh_token, strava_expires_at } = req.body;
+    const [user, created] = await UsersTable.upsert({
+      userId,
+      strava_connected,
+      strava_user_id,
+      strava_access_token,
+      strava_refresh_token,
+      strava_expires_at
+    }, { returning: true });
+    res.status(created ? 201 : 200).json(user);
+  } catch (error) {
+    console.error('Error creating/updating user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get all bikes for a user
+app.get('/api/users/:userId/bikes', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const bikes = await BikesTable.findAll({ where: { userId } });
+    res.json(bikes);
+  } catch (error) {
+    console.error('Error fetching bikes:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get a specific bike by name for a user
+app.get('/api/users/:userId/bikes/by-name/:bikeName', async (req, res) => {
+  try {
+    const { userId, bikeName } = req.params;
+    const bike = await BikesTable.findOne({ 
+      where: { userId, name: bikeName } 
+    });
+    if (!bike) {
+      return res.status(404).json({ error: 'Bike not found' });
+    }
+    res.json(bike);
+  } catch (error) {
+    console.error('Error fetching bike:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update chain wax for a bike
+app.post('/api/users/:userId/bikes/:bikeName/wax', async (req, res) => {
+  try {
+    const { userId, bikeName } = req.params;
+    
+    const bike = await BikesTable.findOne({ 
+      where: { userId, name: bikeName } 
+    });
+    
+    if (!bike) {
+      return res.status(404).json({ error: 'Bike not found' });
+    }
+    
+    await BikesTable.update(
+      { lastWaxedDistance: bike.distance },
+      { where: { bikeId: bike.bikeId, userId } }
+    );
+    
+    const updatedBike = await BikesTable.findOne({ 
+      where: { userId, name: bikeName } 
+    });
+    
+    res.json(updatedBike);
+  } catch (error) {
+    console.error('Error updating wax distance:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Sync bikes from Strava
+app.post('/api/users/:userId/bikes/sync', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await UsersTable.findOne({ where: { userId } });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    if (!user.strava_connected) {
+      return res.status(400).json({ error: 'Strava account not connected' });
+    }
+    
+    const stravaAccessToken = await getStravaAuthentication(user.dataValues);
+    const athleteId = user.strava_user_id;
+    
+    await setupBikes(athleteId, userId, stravaAccessToken);
+    
+    const bikes = await BikesTable.findAll({ where: { userId } });
+    res.json(bikes);
+  } catch (error) {
+    console.error('Error syncing bikes:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get Strava auth URL
+app.post('/api/strava/auth-url', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const stravaClientId = (await azureClient.getSecret('stravaClientId')).value;
+    const stravaRedirectUri = (await azureClient.getSecret('stravaRedirectUri')).value;
+    
+    const authUrl = `https://www.strava.com/oauth/authorize?client_id=${stravaClientId}&response_type=code&redirect_uri=${stravaRedirectUri}/${userId}&approval_prompt=force&scope=activity:read_all`;
+    
+    res.json({ authUrl });
+  } catch (error) {
+    console.error('Error generating auth URL:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get latest ride for a user
+app.get('/api/users/:userId/latest-ride', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await UsersTable.findOne({ where: { userId } });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    if (!user.strava_connected) {
+      return res.status(400).json({ error: 'Strava account not connected' });
+    }
+    
+    const stravaAccessToken = await getStravaAuthentication(user.dataValues);
+    
+    const response = await axios.get('https://www.strava.com/api/v3/athlete/activities', {
+      headers: { Authorization: `Bearer ${stravaAccessToken}` },
+      params: { per_page: 1 }
+    });
+
+    const latestRide = response.data[0];
+
+    if (!latestRide) {
+      return res.status(404).json({ error: 'No rides found' });
+    }
+
+    res.json(latestRide);
+  } catch (error) {
+    console.error('Error fetching latest ride:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.listen(STRAVA_WEBHOOK_PORT, () => {
   console.log(`Strava webhook server is running on port ${STRAVA_WEBHOOK_PORT}`);
+  console.log(`Backend API ready on port ${STRAVA_WEBHOOK_PORT}`);
 });
 
 async function setupBikes(athleteId, userId, stravaAccessToken) {

@@ -2,13 +2,15 @@
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { Collection, Events, GatewayIntentBits } from 'discord.js';
-import { UsersTable, BikesTable } from './db-objects.js';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { getDiscordClient } from './shared-library/discord-client.js';
 
 // Define __dirname for ES modules
 const FILENAME = fileURLToPath(import.meta.url);
 const DIRNAME = join(FILENAME, '..');
+
+// Backend API URL (will be set via environment variable)
+export const BACKEND_API_URL = process.env.BACKEND_API_URL || 'http://localhost:3000';
 
 // Get the shared Discord client
 const discordClient = await getDiscordClient();
@@ -32,14 +34,10 @@ for (const folder of commandFolders) {
   }
 }
 
-// Manage the sequelize connection
+// Discord client ready event
 discordClient.once(Events.ClientReady, readyClient => {
-  console.log('Syncing database...');
-  //UsersTable.sync({ alter: true, force: true });
-  UsersTable.sync();
-  //BikesTable.sync({ alter: true, force: true });
-  BikesTable.sync();
   console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+  console.log(`Connected to backend API at: ${BACKEND_API_URL}`);
 });
 
 discordClient.on(Events.InteractionCreate, async interaction => {
