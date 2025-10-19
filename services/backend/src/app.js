@@ -42,6 +42,10 @@ try {
   process.exit(1);
 }
 
+// Track service readiness
+let isReady = false;
+let isHealthy = true;
+
 // Helper function to send Discord messages via the Discord bot service
 async function sendDiscordMessage(userId, message) {
   try {
