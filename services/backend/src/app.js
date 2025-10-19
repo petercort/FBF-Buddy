@@ -22,8 +22,23 @@ app.use((req, res, next) => {
 app.use(json());
 
 // Call the azure_secrets.js to get the secrets
-const azureClient = await getAzureSecretsClient();
-const stravaVerifyToken = (await azureClient.getSecret('stravaVerifyToken')).value;
+let azureClient;
+let stravaVerifyToken;
+
+try {
+  console.log('Initializing Azure Key Vault client...');
+  console.log('KEY_VAULT_NAME:', process.env.KEY_VAULT_NAME);
+  azureClient = await getAzureSecretsClient();
+  console.log('Azure Key Vault client initialized successfully');
+  
+  console.log('Fetching Strava verify token from Key Vault...');
+  stravaVerifyToken = (await azureClient.getSecret('stravaVerifyToken')).value;
+  console.log('Strava verify token fetched successfully');
+} catch (error) {
+  console.error('FATAL: Failed to initialize Azure Key Vault:', error.message);
+  console.error('Stack:', error.stack);
+  process.exit(1);
+}
 
 // Helper function to send Discord messages via the Discord bot service
 async function sendDiscordMessage(userId, message) {
