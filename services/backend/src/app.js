@@ -1,6 +1,6 @@
 
 import express, { json } from 'express';
-import { UsersTable, BikesTable } from './db-objects.js';
+import { initializeDatabase, testDatabaseConnection } from './db-objects.js';
 import axios from 'axios';
 import { firstTimeAuth, getStravaAuthentication } from './shared-library/strava-authentication.js';
 import { getAzureSecretsClient } from './shared-library/azure-secrets.js';
@@ -9,13 +9,15 @@ const STRAVA_WEBHOOK_PORT = 3000;
 const DISCORD_BOT_API_URL = process.env.DISCORD_BOT_API_URL || 'http://localhost:3001';
 const app = express();
 
+// Track service readiness
+let isReady = false;
+let isHealthy = true;
+let dbInitialized = false;
+
 // Add request logging middleware
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] ${req.method} ${req.path} - Headers:`, JSON.stringify(req.headers, null, 2));
-  if (req.body && Object.keys(req.body).length > 0) {
-    console.log(`[${timestamp}] Request Body:`, JSON.stringify(req.body, null, 2));
-  }
+  console.log(`[${timestamp}] ${req.method} ${req.path}`);
   next();
 });
 
@@ -39,10 +41,6 @@ try {
   console.error('Stack:', error.stack);
   process.exit(1);
 }
-
-// Track service readiness
-let isReady = false;
-let isHealthy = true;
 
 // Helper function to send Discord messages via the Discord bot service
 async function sendDiscordMessage(userId, message) {
@@ -94,10 +92,9 @@ app.get('/ready', async (req, res) => {
     }
     
     // Check database connection
-    const { sequelize } = await import('./db-objects.js');
-    await sequelize.authenticate();
-    checks.database = true;
-    
+    if (dbInitialized) {
+      checks.database = await testDatabaseConnection();
+    }
     const allChecksPass = Object.values(checks).every(check => check === true);
     
     if (!allChecksPass) {
@@ -130,9 +127,33 @@ app.get('/ready', async (req, res) => {
   }
 });
 
+// Middleware to check if database is ready for API endpoints
+function requireDatabase(req, res, next) {
+  if (!dbInitialized) {
+    return res.status(503).json({
+      error: 'Service temporarily unavailable',
+      message: 'Database is still initializing. Please try again in a moment.',
+      timestamp: new Date().toISOString()
+    });
+  }
+  next();
+}
+
+// Helper to get database tables (lazy load)
+async function getTables() {
+  const { UsersTable, BikesTable } = await import('./db-objects.js');
+  return { UsersTable, BikesTable };
+}
+
 app.post('/webhook', async (req, res) => {
+  if (!dbInitialized) {
+    console.log('Webhook received but database not initialized yet');
+    return res.sendStatus(503);
+  }
+  
   console.log('webhook event received!', req.body);
   const event = req.body;
+  const { UsersTable } = await getTables();
 
   if (event.object_type === 'activity' && event.aspect_type === 'create') {
     const ownerIdString = event.owner_id.toString();
@@ -225,9 +246,10 @@ app.get('/strava/callback/:userId', async (req, res) => {
 // ============================================
 
 // Get user by Discord user ID
-app.get('/api/users/:userId', async (req, res) => {
+app.get('/api/users/:userId', requireDatabase, async (req, res) => {
   try {
     const { userId } = req.params;
+    const { UsersTable } = await getTables();
     const user = await UsersTable.findOne({ where: { userId } });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -240,9 +262,10 @@ app.get('/api/users/:userId', async (req, res) => {
 });
 
 // Create or update user
-app.post('/api/users', async (req, res) => {
+app.post('/api/users', requireDatabase, async (req, res) => {
   try {
     const { userId, strava_connected, strava_user_id, strava_access_token, strava_refresh_token, strava_expires_at } = req.body;
+    const { UsersTable } = await getTables();
     const [user, created] = await UsersTable.upsert({
       userId,
       strava_connected,
@@ -259,9 +282,10 @@ app.post('/api/users', async (req, res) => {
 });
 
 // Get all bikes for a user
-app.get('/api/users/:userId/bikes', async (req, res) => {
+app.get('/api/users/:userId/bikes', requireDatabase, async (req, res) => {
   try {
     const { userId } = req.params;
+    const { BikesTable } = await getTables();
     const bikes = await BikesTable.findAll({ where: { userId } });
     res.json(bikes);
   } catch (error) {
@@ -271,9 +295,10 @@ app.get('/api/users/:userId/bikes', async (req, res) => {
 });
 
 // Get a specific bike by name for a user
-app.get('/api/users/:userId/bikes/by-name/:bikeName', async (req, res) => {
+app.get('/api/users/:userId/bikes/by-name/:bikeName', requireDatabase, async (req, res) => {
   try {
     const { userId, bikeName } = req.params;
+    const { BikesTable } = await getTables();
     const bike = await BikesTable.findOne({ 
       where: { userId, name: bikeName } 
     });
@@ -288,9 +313,10 @@ app.get('/api/users/:userId/bikes/by-name/:bikeName', async (req, res) => {
 });
 
 // Update chain wax for a bike
-app.post('/api/users/:userId/bikes/:bikeName/wax', async (req, res) => {
+app.post('/api/users/:userId/bikes/:bikeName/wax', requireDatabase, async (req, res) => {
   try {
     const { userId, bikeName } = req.params;
+    const { BikesTable } = await getTables();
     
     const bike = await BikesTable.findOne({ 
       where: { userId, name: bikeName } 
@@ -317,9 +343,10 @@ app.post('/api/users/:userId/bikes/:bikeName/wax', async (req, res) => {
 });
 
 // Sync bikes from Strava
-app.post('/api/users/:userId/bikes/sync', async (req, res) => {
+app.post('/api/users/:userId/bikes/sync', requireDatabase, async (req, res) => {
   try {
     const { userId } = req.params;
+    const { UsersTable, BikesTable } = await getTables();
     const user = await UsersTable.findOne({ where: { userId } });
     
     if (!user) {
@@ -360,9 +387,10 @@ app.post('/api/strava/auth-url', async (req, res) => {
 });
 
 // Get latest ride for a user
-app.get('/api/users/:userId/latest-ride', async (req, res) => {
+app.get('/api/users/:userId/latest-ride', requireDatabase, async (req, res) => {
   try {
     const { userId } = req.params;
+    const { UsersTable } = await getTables();
     const user = await UsersTable.findOne({ where: { userId } });
     
     if (!user) {
@@ -393,13 +421,29 @@ app.get('/api/users/:userId/latest-ride', async (req, res) => {
   }
 });
 
-app.listen(STRAVA_WEBHOOK_PORT, () => {
+// Start the HTTP server first (so health checks can respond)
+app.listen(STRAVA_WEBHOOK_PORT, async () => {
   console.log(`Strava webhook server is running on port ${STRAVA_WEBHOOK_PORT}`);
   console.log(`Backend API ready on port ${STRAVA_WEBHOOK_PORT}`);
+  
+  // Initialize database after server starts
+  try {
+    console.log('Starting database initialization...');
+    await initializeDatabase();
+    console.log('Database initialized successfully');
+    dbInitialized = true;
+    isReady = true;
+  } catch (error) {
+    console.error('FATAL: Failed to initialize database:', error.message);
+    console.error('Service will continue running but /ready endpoint will fail');
+    isHealthy = false;
+    // Don't exit - let the container keep running for debugging
+  }
 });
 
 async function setupBikes(athleteId, userId, stravaAccessToken) {
   try {
+    const { BikesTable } = await getTables();
     const athleteResponse = await axios.get(`https://www.strava.com/api/v3/athletes/${athleteId}`, {
       headers: { Authorization: `Bearer ${stravaAccessToken}` }
     });
@@ -423,6 +467,7 @@ async function setupBikes(athleteId, userId, stravaAccessToken) {
 
 async function syncBike(bikeId, distance, userId) {
   try {
+    const { BikesTable } = await getTables();
     await BikesTable.update(
       { distance },
       { where: { bikeId, userId }, returning: true, plain: true }
@@ -434,6 +479,7 @@ async function syncBike(bikeId, distance, userId) {
 
 async function getBikeDetails(bikeId, userId) {
   try {
+    const { BikesTable } = await getTables();
     const output = await BikesTable.findOne({ where: { bikeId, userId } });
     return {
       lastWaxedDistance: output.dataValues.lastWaxedDistance,
