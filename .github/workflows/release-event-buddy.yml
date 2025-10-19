@@ -1,9 +1,7 @@
 name: Build and Push Docker Image
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
       
 env:
   DISCORD_BOT_IMAGE_NAME: fbf-buddy-discord-bot
