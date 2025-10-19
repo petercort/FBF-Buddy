@@ -1,27 +1,32 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { EmbedBuilder } from 'discord.js';
-import { UsersTable } from '../../db-objects.js'; // Assuming you have a UsersTable to store user data
-import { getAzureSecretsClient } from '../../shared-library/azure-secrets.js';
-
-// Call the azure-secrets.js to get the secrets
-const azureClient = await getAzureSecretsClient();
-const stravaClientId = (await azureClient.getSecret('stravaClientId')).value;
-const stravaRedirectUri = (await azureClient.getSecret('stravaRedirectUri')).value;
+import { getStravaAuthUrl, createOrUpdateUser } from '../../shared-library/backend-api-client.js';
 
 export const data = new SlashCommandBuilder()
     .setName('connect_strava')
     .setDescription('Connect your Strava account to collect ride data.');
+
 export async function execute(interaction) {
     const userId = interaction.user.id;
-    const stravaAuthUrl = `https://www.strava.com/oauth/authorize?client_id=${stravaClientId}&response_type=code&redirect_uri=${stravaRedirectUri}/${userId}&scope=read,activity:read_all,profile:read_all`;
+    
+    try {
+        // Get the Strava auth URL from backend
+        const stravaAuthUrl = await getStravaAuthUrl(userId);
 
-    const embed = new EmbedBuilder()
-        .setTitle('Connect Strava')
-        .setDescription(`[Click here to connect your Strava account](${stravaAuthUrl})`)
-        .setColor('#FC4C02');
+        const embed = new EmbedBuilder()
+            .setTitle('Connect Strava')
+            .setDescription(`[Click here to connect your Strava account](${stravaAuthUrl})`)
+            .setColor('#FC4C02');
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], ephemeral: true });
 
-    // Save the user ID to the database to track the connection process
-    await UsersTable.upsert({ userId, strava_connected: false });
+        // Save the user ID to the database to track the connection process
+        await createOrUpdateUser({ userId, strava_connected: false });
+    } catch (error) {
+        console.error('Error in connect_strava command:', error);
+        await interaction.reply({ 
+            content: 'There was an error connecting to Strava. Please try again later.', 
+            ephemeral: true 
+        });
+    }
 }
