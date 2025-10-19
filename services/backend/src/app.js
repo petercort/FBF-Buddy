@@ -87,18 +87,25 @@ app.get('/ready', async (req, res) => {
   
   try {
     // Check Key Vault connection
+    console.log('[Ready Check] Checking Key Vault connection...');
     if (azureClient) {
       checks.keyVault = true;
+      console.log('[Ready Check] Key Vault: OK');
+    } else {
+      console.log('[Ready Check] Key Vault: NOT INITIALIZED');
     }
     
     // Check database connection
+    console.log('[Ready Check] Checking database connection...');
     const { sequelize } = await import('./db-objects.js');
     await sequelize.authenticate();
     checks.database = true;
+    console.log('[Ready Check] Database: OK');
     
     const allChecksPass = Object.values(checks).every(check => check === true);
     
     if (!allChecksPass) {
+      console.log('[Ready Check] FAILED - Not all checks passed:', checks);
       return res.status(503).json({
         status: 'not ready',
         service: 'backend',
@@ -109,6 +116,7 @@ app.get('/ready', async (req, res) => {
     
     // Mark service as ready
     isReady = true;
+    console.log('[Ready Check] SUCCESS - Service is ready');
     
     res.json({
       status: 'ready',
@@ -117,7 +125,8 @@ app.get('/ready', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Readiness check failed:', error.message);
+    console.error('[Ready Check] FAILED - Exception occurred:', error.message);
+    console.error('[Ready Check] Error stack:', error.stack);
     res.status(503).json({
       status: 'not ready',
       service: 'backend',
@@ -430,14 +439,25 @@ app.listen(STRAVA_WEBHOOK_PORT, async () => {
   
   // Initialize database after server starts
   try {
+    const dbStartTime = Date.now();
+    console.log('='.repeat(60));
     console.log('Starting database initialization...');
+    console.log('='.repeat(60));
     await initializeDatabase();
-    console.log('Database initialized successfully');
+    const dbInitTime = Date.now() - dbStartTime;
+    console.log('='.repeat(60));
+    console.log(`Database initialized successfully (total time: ${dbInitTime}ms)`);
+    console.log('='.repeat(60));
     dbInitialized = true;
     isReady = true;
   } catch (error) {
-    console.error('FATAL: Failed to initialize database:', error.message);
+    console.error('='.repeat(60));
+    console.error('FATAL: Failed to initialize database');
+    console.error('='.repeat(60));
+    console.error('Error:', error.message);
+    console.error('Stack:', error.stack);
     console.error('Service will continue running but /ready endpoint will fail');
+    console.error('='.repeat(60));
     isHealthy = false;
     // Don't exit - let the container keep running for debugging
   }
