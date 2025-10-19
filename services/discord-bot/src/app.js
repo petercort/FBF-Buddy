@@ -13,7 +13,18 @@ const DIRNAME = join(FILENAME, '..');
 export const BACKEND_API_URL = process.env.BACKEND_API_URL || 'http://localhost:3000';
 
 // Get the shared Discord client
-const discordClient = await getDiscordClient();
+let discordClient;
+try {
+  console.log('Initializing Discord client...');
+  console.log('KEY_VAULT_NAME:', process.env.KEY_VAULT_NAME);
+  console.log('BACKEND_API_URL:', BACKEND_API_URL);
+  discordClient = await getDiscordClient();
+  console.log('Discord client initialized successfully');
+} catch (error) {
+  console.error('FATAL: Failed to initialize Discord client:', error.message);
+  console.error('Stack:', error.stack);
+  process.exit(1);
+}
 
 // Create the commands collection
 discordClient.commands = new Collection();
