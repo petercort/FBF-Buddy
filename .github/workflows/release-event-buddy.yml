@@ -206,6 +206,7 @@ jobs:
         imageToDeploy: ${{ needs.build.outputs.discord-bot-image }}:latest
         environmentVariables: |
           KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }}
+          BACKEND_API_URL=http://fbf-buddy-backend:3000
     
     # Deploy Backend
     - name: Deploy Backend to Azure Container App
