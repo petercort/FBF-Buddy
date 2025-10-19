@@ -87,6 +87,10 @@ const DISCORD_BOT_API_PORT = 3001;
 const app = express();
 app.use(json());
 
+// Track service readiness
+let isReady = false;
+let isHealthy = true;
+
 // Endpoint to send direct messages to users
 app.post('/api/send-message', async (req, res) => {
   const { userId, message } = req.body;
@@ -105,9 +109,85 @@ app.post('/api/send-message', async (req, res) => {
   }
 });
 
-// Health check endpoint
+// Health check endpoints
+app.get('/', (req, res) => {
+  // Basic root path response
+  res.sendStatus(200);
+});
+
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'discord-bot' });
+  // Liveness probe - checks if the service is alive
+  if (!isHealthy) {
+    return res.status(503).json({
+      status: 'unhealthy',
+      service: 'discord-bot',
+      timestamp: new Date().toISOString()
+    });
+  }
+  
+  res.json({
+    status: 'healthy',
+    service: 'discord-bot',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/ready', async (req, res) => {
+  // Readiness probe - checks if the service is ready to accept traffic
+  const checks = {
+    discordClient: false,
+    backendApi: false
+  };
+  
+  try {
+    // Check Discord client connection
+    if (discordClient && discordClient.isReady()) {
+      checks.discordClient = true;
+    }
+    
+    // Check backend API availability
+    try {
+      const response = await fetch(`${BACKEND_API_URL}/health`, { 
+        method: 'GET',
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      });
+      if (response.ok) {
+        checks.backendApi = true;
+      }
+    } catch (error) {
+      console.log('Backend API check failed:', error.message);
+    }
+    
+    const allChecksPass = Object.values(checks).every(check => check === true);
+    
+    if (!allChecksPass) {
+      return res.status(503).json({
+        status: 'not ready',
+        service: 'discord-bot',
+        checks,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // Mark service as ready
+    isReady = true;
+    
+    res.json({
+      status: 'ready',
+      service: 'discord-bot',
+      checks,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Readiness check failed:', error.message);
+    res.status(503).json({
+      status: 'not ready',
+      service: 'discord-bot',
+      checks,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 app.listen(DISCORD_BOT_API_PORT, () => {
