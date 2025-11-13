@@ -199,7 +199,7 @@ jobs:
     
     # Deploy Discord Bot
     - name: Deploy Discord Bot to Azure Container App
-      uses: azure/container-apps-deploy-action@v1
+      uses: azure/container-apps-deploy-action@v2
       with:
         containerAppName: ${{ env.DISCORD_BOT_CONTAINER_APP }}
         resourceGroup: ${{ env.RESOURCE_GROUP }}
@@ -210,7 +210,7 @@ jobs:
     
     # Deploy Backend
     - name: Deploy Backend to Azure Container App
-      uses: azure/container-apps-deploy-action@v1
+      uses: azure/container-apps-deploy-action@v2
       with:
         containerAppName: ${{ env.BACKEND_CONTAINER_APP }}
         resourceGroup: ${{ env.RESOURCE_GROUP }}
