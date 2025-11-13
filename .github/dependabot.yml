@@ -7,11 +7,10 @@ updates:
     labels:
       - "chore"
       - "semver:patch"
-    dependency-groups:
-      production-dependencies:
-        dependency-type: "production"
-      development-dependencies:
-        dependency-type: "development"
+    groups:
+      all-dependencies:
+        patterns:
+          - "*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -20,8 +19,7 @@ updates:
     labels:
       - "chore"
       - "no-release"
-    dependency-groups:
-      ci-tools:
+    groups:
+      all-github-actions:
         patterns:
-          - "actions/*"
-          - "github/*"
+          - "*"

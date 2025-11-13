@@ -1,7 +1,7 @@
 
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { Collection, Events, GatewayIntentBits } from 'discord.js';
+import { Collection, Events, GatewayIntentBits, MessageFlags } from 'discord.js';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { getDiscordClient } from './shared-library/discord-client.js';
 
@@ -66,13 +66,13 @@ discordClient.on(Events.InteractionCreate, async interaction => {
 	console.error(error);
 	if (interaction.replied || interaction.deferred) {
 	  try {
-		await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+		await interaction.followUp({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
 	  } catch (followUpError) {
 		console.error('Error sending follow-up message:', followUpError);
 	  }
 	} else {
 	  try {
-		await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+		await interaction.reply({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
 	  } catch (replyError) {
 		console.error('Error sending reply message:', replyError);
 	  }

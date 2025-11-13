@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { EmbedBuilder } from 'discord.js';
+import { EmbedBuilder, MessageFlags } from 'discord.js';
 import { getStravaAuthUrl, createOrUpdateUser } from '../../shared-library/backend-api-client.js';
 
 export const data = new SlashCommandBuilder()
@@ -18,7 +18,7 @@ export async function execute(interaction) {
             .setDescription(`[Click here to connect your Strava account](${stravaAuthUrl})`)
             .setColor('#FC4C02');
 
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
 
         // Save the user ID to the database to track the connection process
         await createOrUpdateUser({ userId, strava_connected: false });
@@ -26,7 +26,7 @@ export async function execute(interaction) {
         console.error('Error in connect_strava command:', error);
         await interaction.reply({ 
             content: 'There was an error connecting to Strava. Please try again later.', 
-            ephemeral: true 
+            flags: MessageFlags.Ephemeral 
         });
     }
 }

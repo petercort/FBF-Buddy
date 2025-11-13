@@ -16,8 +16,11 @@ services:
       - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
       - AZURE_TENANT_ID=${AZURE_TENANT_ID}
       - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
+      - BACKEND_API_URL=http://backend:3000
     ports:
       - "3001:3001"
+    depends_on:
+      - backend
     restart: unless-stopped
     networks:
       - fbf-network
@@ -41,8 +44,6 @@ services:
       - DISCORD_BOT_API_URL=http://discord-bot:3001
     ports:
       - "3000:3000"
-    depends_on:
-      - discord-bot
     restart: unless-stopped
     networks:
       - fbf-network
