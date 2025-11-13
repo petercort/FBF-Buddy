@@ -18,14 +18,15 @@ export async function execute(interaction) {
             .setDescription(`[Click here to connect your Strava account](${stravaAuthUrl})`)
             .setColor('#FC4C02');
 
-        await interaction.editReply({ embeds: [embed] });
+        await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
 
         // Save the user ID to the database to track the connection process
         await createOrUpdateUser({ userId, strava_connected: false });
     } catch (error) {
         console.error('Error in connect_strava command:', error);
-        await interaction.editReply({ 
-            content: 'There was an error connecting to Strava. Please try again later.'
+        await interaction.reply({ 
+            content: 'There was an error connecting to Strava. Please try again later.', 
+            flags: MessageFlags.Ephemeral 
         });
     }
 }
