@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { EmbedBuilder } from 'discord.js';
+import { EmbedBuilder, MessageFlags } from 'discord.js';
 import { getLatestRide } from '../../shared-library/backend-api-client.js';
 
 export const data = new SlashCommandBuilder()
@@ -13,7 +13,7 @@ export async function execute(interaction) {
     const latestRide = await getLatestRide(userId);
     
     if (!latestRide) {
-      return interaction.reply({ content: 'No rides found or you need to connect your Strava account first.', ephemeral: true });
+      return interaction.reply({ content: 'No rides found or you need to connect your Strava account first.', flags: MessageFlags.Ephemeral });
     }
 
     const embed = new EmbedBuilder()
@@ -21,9 +21,9 @@ export async function execute(interaction) {
       .setDescription(`**Distance:** ${latestRide.distance} meters\n**Date:** ${new Date(latestRide.start_date).toLocaleString()}`)
       .setColor('#FC4C02');
 
-    return interaction.reply({ embeds: [embed], ephemeral: true });
+    return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
   } catch (error) {
     console.error('Error fetching latest ride:', error);
-    return interaction.reply({ content: 'There was an error fetching your latest ride.', ephemeral: true });
+    return interaction.reply({ content: 'There was an error fetching your latest ride.', flags: MessageFlags.Ephemeral });
   }
 }
