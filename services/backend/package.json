@@ -1,7 +1,7 @@
 {
     "name": "fbf-buddy-backend",
     "private": true,
-    "version": "1.5.11",
+    "version": "1.5.13",
     "description": "FBF-Buddy Backend/API/Database Service",
     "main": "src/app.js",
     "type": "module",
