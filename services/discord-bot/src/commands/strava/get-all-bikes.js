@@ -14,20 +14,20 @@ export async function execute(interaction) {
     // Look up if the user is in the database
     const user = await getUser(userId);
     if (!user) {
-      return await interaction.reply({ content: 'Please connect your Strava using the /connect_strava command.', flags: MessageFlags.Ephemeral });
+      return await interaction.editReply({ content: 'Please connect your Strava using the /connect_strava command.' });
     }
 
     // Query the backend API to get all bikes for the user
     const bikes = await getUserBikes(userId);
     
     if (bikes.length === 0) {
-      return await interaction.reply({ content: 'No bikes found! Add a bike by going to https://www.strava.com/settings/gear and adding a bike. Then run /sync_bikes to sync your bikes.', flags: MessageFlags.Ephemeral });
+      return await interaction.editReply({ content: 'No bikes found! Add a bike by going to https://www.strava.com/settings/gear and adding a bike. Then run /sync_bikes to sync your bikes.' });
     }
     
     const bikeList = bikes.map(bike => `${bike.name}: ${bike.brand} ${bike.model}. ${Math.round(bike.distance * METERS_TO_MILES_CONVERSION)} miles. Last waxed on ${bike.lastWaxedDate} at ${Math.round(bike.lastWaxedDistance * METERS_TO_MILES_CONVERSION)} miles.`).join('\n');
-    return await interaction.reply({ content: `Your bikes:\n${bikeList}`, flags: MessageFlags.Ephemeral });
+    return await interaction.editReply({ content: `Your bikes:\n${bikeList}` });
   } catch (error) {
     console.error('Error fetching bikes:', error);
-    return await interaction.reply({ content: 'There was an error fetching your bikes.', flags: MessageFlags.Ephemeral });
+    return await interaction.editReply({ content: 'There was an error fetching your bikes.' });
   }
 }

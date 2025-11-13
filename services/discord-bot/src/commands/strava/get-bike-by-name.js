@@ -17,7 +17,7 @@ export async function execute(interaction) {
     // Look up if the user is in the database
     const user = await getUser(userId);
     if (!user) {
-      return await interaction.reply({ content: 'Please connect your Strava using the /connect_strava command.', flags: MessageFlags.Ephemeral });
+      return await interaction.editReply({ content: 'Please connect your Strava using the /connect_strava command.' });
     }
 
     const bikeName = interaction.options.getString('name');
@@ -26,13 +26,13 @@ export async function execute(interaction) {
     const bike = await getBikeByName(userId, bikeName);
 
     if (!bike) {
-      return await interaction.reply({ content: 'No bike found with that name.', flags: MessageFlags.Ephemeral });
+      return await interaction.editReply({ content: 'No bike found with that name.' });
     }
     
     const bikeInfo = `${bike.name}: ${bike.brand} ${bike.model}. ${Math.round(bike.distance * METERS_TO_MILES_CONVERSION)} miles. Last waxed on ${bike.lastWaxedDate} at ${Math.round(bike.lastWaxedDistance * METERS_TO_MILES_CONVERSION)} miles.`;
-    return await interaction.reply({ content: bikeInfo, flags: MessageFlags.Ephemeral });
+    return await interaction.editReply({ content: bikeInfo });
   } catch (error) {
     console.error('Error fetching bike:', error);
-    return await interaction.reply({ content: 'There was an error fetching your bike.', flags: MessageFlags.Ephemeral });
+    return await interaction.editReply({ content: 'There was an error fetching your bike.' });
   }
 }

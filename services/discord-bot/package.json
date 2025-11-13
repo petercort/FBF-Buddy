@@ -1,7 +1,7 @@
 {
     "name": "fbf-buddy-discord-bot",
     "private": true,
-    "version": "1.5.11",
+    "version": "1.5.12",
     "description": "FBF-Buddy Discord Bot Service",
     "main": "src/app.js",
     "type": "module",

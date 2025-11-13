@@ -24,7 +24,7 @@ export async function execute(interaction) {
     // Look up if the user is in the database
     const user = await getUser(userId);
     if (!user) {
-      return await interaction.reply({ content: 'Please connect your Strava using the /connect_strava command.', flags: MessageFlags.Ephemeral });
+      return await interaction.editReply({ content: 'Please connect your Strava using the /connect_strava command.' });
     }
 
     const bikeName = interaction.options.getString('bike_name');
@@ -32,19 +32,18 @@ export async function execute(interaction) {
     // Find the bike
     const bike = await getBikeByName(userId, bikeName);
     if (!bike) {
-      return await interaction.reply({ content: `Bike "${bikeName}" not found. Use /sync_bikes to sync your bikes first.`, flags: MessageFlags.Ephemeral });
+      return await interaction.editReply({ content: `Bike "${bikeName}" not found. Use /sync_bikes to sync your bikes first.` });
     }
 
     // Update chain wax - backend will set lastWaxedDistance to current distance
     const updatedBike = await updateChainWax(userId, bikeName);
     
     const distanceMiles = Math.round(updatedBike.lastWaxedDistance * METERS_TO_MILES_CONVERSION);
-    await interaction.reply({ 
-      content: `Successfully updated the last waxed distance for ${updatedBike.name} to ${distanceMiles} miles.`, 
-      flags: MessageFlags.Ephemeral 
+    await interaction.editReply({ 
+      content: `Successfully updated the last waxed distance for ${updatedBike.name} to ${distanceMiles} miles.`
     });
   } catch (error) {
     console.error('Error updating waxed chain date:', error);
-    await interaction.reply({ content: 'There was an error updating the waxed chain date.', flags: MessageFlags.Ephemeral });
+    await interaction.editReply({ content: 'There was an error updating the waxed chain date.' });
   }
 }

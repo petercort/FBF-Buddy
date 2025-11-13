@@ -13,24 +13,24 @@ export async function execute(interaction) {
   try {
     const user = await getUser(userId);
     if (!user) {
-      return await interaction.reply({ content: 'Please connect your Strava using the /connect_strava command.', flags: MessageFlags.Ephemeral });
+      return await interaction.editReply({ content: 'Please connect your Strava using the /connect_strava command.' });
     }
     
     if (!user.strava_connected) {
-      return interaction.reply({ content: 'You need to connect your Strava account first.', flags: MessageFlags.Ephemeral });
+      return interaction.editReply({ content: 'You need to connect your Strava account first.' });
     }
     
     // Call backend API to sync bikes from Strava
     const bikes = await syncBikesFromStrava(userId);
 
     if (bikes.length === 0) {
-      return await interaction.reply({ content: 'No bikes found on Strava.', flags: MessageFlags.Ephemeral });
+      return await interaction.editReply({ content: 'No bikes found on Strava.' });
     }
     
     const bikeList = bikes.map(bike => `${bike.name} (${bike.brand} ${bike.model} ${Math.round(bike.distance * METERS_TO_MILES_CONVERSION)} miles)`).join('\n');
-    return await interaction.reply({ content: `Your bikes have been synced:\n${bikeList}`, flags: MessageFlags.Ephemeral });
+    return await interaction.editReply({ content: `Your bikes have been synced:\n${bikeList}` });
   } catch (error) {
     console.error('Error fetching or syncing bikes:', error);
-    return await interaction.reply({ content: 'There was an error syncing your bikes.', flags: MessageFlags.Ephemeral });
+    return await interaction.editReply({ content: 'There was an error syncing your bikes.' });
   }
 }

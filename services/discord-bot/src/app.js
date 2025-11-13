@@ -61,21 +61,25 @@ discordClient.on(Events.InteractionCreate, async interaction => {
   }
 
   try {
+	// Defer the reply immediately to prevent timeout (3 second limit)
+	await interaction.deferReply();
+	
+	// Execute the command
 	await command.execute(interaction);
   } catch (error) {
 	console.error(error);
-	if (interaction.replied || interaction.deferred) {
-	  try {
+	try {
+	  // Since we deferred, use editReply or followUp depending on state
+	  if (interaction.deferred && !interaction.replied) {
+		await interaction.editReply({ content: 'There was an error while executing this command!' });
+	  } else if (interaction.replied) {
 		await interaction.followUp({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
-	  } catch (followUpError) {
-		console.error('Error sending follow-up message:', followUpError);
-	  }
-	} else {
-	  try {
+	  } else {
+		// Fallback - shouldn't reach here if we deferred properly
 		await interaction.reply({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
-	  } catch (replyError) {
-		console.error('Error sending reply message:', replyError);
 	  }
+	} catch (replyError) {
+	  console.error('Error sending error message:', replyError);
 	}
   }
 });
