@@ -27,7 +27,7 @@
     "dependencies": {
         "@azure/identity": "^4.13.0",
         "@azure/keyvault-secrets": "^4.9.0",
-        "@npmcli/fs": "^4.0.0",
+        "@npmcli/fs": "^5.0.0",
         "axios": "^1.12.0",
         "clean": "^4.0.2",
         "discord.js": "^14.17.3",
