@@ -22,6 +22,12 @@ This application uses a microservices architecture:
 
 See [services/README.md](services/README.md) for more details on running and developing the services.
 
+## Documentation
+
+- **[Local Development Guide](LOCAL-DEVELOPMENT.md)** - Complete guide for setting up and running FBF-Buddy locally
+- **[Azure Deployment](AZURE-DEPLOYMENT.md)** - Production deployment to Azure Container Apps
+- **[Health Checks](HEALTH-CHECKS.md)** - Health check and readiness probe documentation
+
 ### Quick Start
 
 ```bash
