@@ -32,7 +32,7 @@
         "clean": "^4.0.2",
         "discord.js": "^14.24.2",
         "dotenv": "^17.2.3",
-        "express": "^5.1.0",
+        "express": "^5.2.0",
         "fbf-buddy": "file:",
         "pg": "^8.11.1",
         "sequelize": "^6.37.7"
