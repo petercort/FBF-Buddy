@@ -34,7 +34,7 @@ jobs:
       
       - name: Comment test results
         if: always()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const testStatus = '${{ job.status }}' === 'success' ? '✅ Tests passed' : '❌ Tests failed';
