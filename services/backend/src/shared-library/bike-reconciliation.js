@@ -1,9 +1,14 @@
 import { Op } from 'sequelize';
 
-export async function removeInactiveBikes(BikesTable, userId, activeBikeIds) {
-  await BikesTable.destroy({
-    where: activeBikeIds.length
-      ? { userId, bikeId: { [Op.notIn]: activeBikeIds } }
-      : { userId }
-  });
+export async function retireInactiveBikes(BikesTable, userId, activeBikeIds) {
+  await BikesTable.update(
+    { retired: true },
+    {
+      where: {
+        userId,
+        retired: false,
+        ...(activeBikeIds.length ? { bikeId: { [Op.notIn]: activeBikeIds } } : {})
+      }
+    }
+  );
 }

@@ -47,6 +47,10 @@ async function initializeDatabase() {
     const connectionTime = Date.now() - startTime;
     console.log(`[DB] Database connection established successfully (${connectionTime}ms)`);
 
+    await sequelizeInstance.query(
+      'ALTER TABLE "bikes" ADD COLUMN IF NOT EXISTS "retired" BOOLEAN NOT NULL DEFAULT FALSE'
+    );
+
     // Initialize models
     console.log('[DB] Initializing database models...');
     UsersTable = usersModel(sequelizeInstance, Sequelize.DataTypes);
