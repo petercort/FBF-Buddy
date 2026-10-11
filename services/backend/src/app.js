@@ -4,6 +4,7 @@ import { initializeDatabase, testDatabaseConnection } from './db-objects.js';
 import axios from 'axios';
 import { firstTimeAuth, getStravaAuthentication } from './shared-library/strava-authentication.js';
 import { getAzureSecretsClient } from './shared-library/azure-secrets.js';
+import { removeInactiveBikes } from './shared-library/bike-reconciliation.js';
 
 const STRAVA_WEBHOOK_PORT = 3000;
 const DISCORD_BOT_API_URL = process.env.DISCORD_BOT_API_URL || 'http://localhost:3001';
@@ -469,10 +470,15 @@ async function setupBikes(athleteId, userId, stravaAccessToken) {
     const athleteResponse = await axios.get(`https://www.strava.com/api/v3/athletes/${athleteId}`, {
       headers: { Authorization: `Bearer ${stravaAccessToken}` }
     });
+    const activeBikeIds = [];
     for (const bike of athleteResponse.data.bikes) {
       const bikeData = await axios.get(`https://www.strava.com/api/v3/gear/${bike.id}`, {
         headers: { Authorization: `Bearer ${stravaAccessToken}` }
       });
+      if (bikeData.data.retired) {
+        continue;
+      }
+      activeBikeIds.push(bike.id);
       await BikesTable.upsert({
         bikeId: bike.id,
         userId: userId,
@@ -482,6 +488,7 @@ async function setupBikes(athleteId, userId, stravaAccessToken) {
         distance: bike.distance
       });
     }
+    await removeInactiveBikes(BikesTable, userId, activeBikeIds);
   } catch (error) {
     console.error('Error fetching athlete data:', error.status, error.message);
   }
