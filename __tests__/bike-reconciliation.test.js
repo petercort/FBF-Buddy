@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { jest } from '@jest/globals';
 import { removeInactiveBikes } from '../services/backend/src/shared-library/bike-reconciliation.js';
 
 describe('Bike reconciliation', () => {
