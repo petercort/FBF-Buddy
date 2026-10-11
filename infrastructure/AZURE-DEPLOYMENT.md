@@ -100,6 +100,57 @@ az containerapp create \
   --env-vars \
     KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }} \
     AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} \
+    AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}
+```
+
+**After creation, get the backend FQDN:**
+```bash
+BACKEND_FQDN=$(az containerapp show \
+  --name fbf-buddy-backend \
+  --resource-group peter-corp-rg \
+  --query "properties.configuration.ingress.fqdn" -o tsv)
+echo "Backend FQDN: https://$BACKEND_FQDN"
+```
+
+### 5. Create Container App for Discord Bot
+
+```bash
+# Use the backend FQDN from step 4
+az containerapp create \
+  --name fbf-buddy-discord-bot \
+  --resource-group peter-corp-rg \
+  --environment fbf-buddy-env \
+  --image ghcr.io/petercort/fbf-buddy-discord-bot:latest \
+  --target-port 3001 \
+  --ingress external \
+  --min-replicas 1 \
+  --max-replicas 1 \
+  --cpu 0.5 \
+  --memory 1Gi \
+  --registry-server ghcr.io \
+  --registry-username <your-github-username> \
+  --registry-password <your-github-pat> \
+  --env-vars \
+    KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }} \
+    AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} \
+    AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} \
+    BACKEND_API_URL=https://$BACKEND_FQDN
+```
+
+**After creation, update backend with discord bot FQDN:**
+```bash
+DISCORD_BOT_FQDN=$(az containerapp show \
+  --name fbf-buddy-discord-bot \
+  --resource-group peter-corp-rg \
+  --query "properties.configuration.ingress.fqdn" -o tsv)
+
+az containerapp update \
+  --name fbf-buddy-backend \
+  --resource-group peter-corp-rg \
+  --set-env-vars "DISCORD_BOT_API_URL=https://$DISCORD_BOT_FQDN"
+```
+    KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }} \
+    AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} \
     AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} \
     DISCORD_BOT_API_URL=http://fbf-buddy-discord-bot:3001 \
   --secrets azure-client-secret=${{ secrets.AZURE_CLIENT_SECRET }}
@@ -126,7 +177,12 @@ When running locally, `DefaultAzureCredential` falls back to:
    - `AZURE_CLIENT_SECRET` - Service Principal Secret
 
 ### Backend-Specific
-- `DISCORD_BOT_API_URL` - Internal URL to Discord Bot service (http://fbf-buddy-discord-bot:3001)
+- `DISCORD_BOT_API_URL` - Full FQDN to Discord Bot service (e.g., `https://fbf-buddy-discord-bot.happyplant-c6ea055c.westus2.azurecontainerapps.io`)
+
+### Discord Bot-Specific
+- `BACKEND_API_URL` - Full FQDN to Backend service (e.g., `https://fbf-buddy-backend.happyplant-c6ea055c.westus2.azurecontainerapps.io`)
+
+**Important**: In Azure Container Apps, services communicate using their full FQDNs, not simple hostnames. The FQDNs are in the format: `https://<app-name>.<environment-unique-id>.<region>.azurecontainerapps.io`
 
 ## Managed Identity Setup
 
@@ -250,14 +306,30 @@ az containerapp show \
 
 ## Scaling
 
+### Important: Prevent Scale-to-Zero for Discord Bots
+
+Discord bots need to maintain a persistent connection to Discord. Setting `minReplicas` to 0 will cause the bot to disconnect when scaled down.
+
+**Recommended configuration:**
+- **Discord Bot**: `minReplicas: 1`, `maxReplicas: 2` (needs persistent connection)
+- **Backend**: `minReplicas: 1`, `maxReplicas: 3` (can scale based on load)
+
 ### Manual Scaling
 
 ```bash
+# Backend - can scale higher based on traffic
 az containerapp update \
   --name fbf-buddy-backend \
   --resource-group peter-corp-rg \
   --min-replicas 1 \
-  --max-replicas 5
+  --max-replicas 3
+
+# Discord Bot - keep lower since it needs persistent connection
+az containerapp update \
+  --name fbf-buddy-discord-bot \
+  --resource-group peter-corp-rg \
+  --min-replicas 1 \
+  --max-replicas 2
 ```
 
 ### Auto-scaling Rules
@@ -271,7 +343,39 @@ az containerapp update \
   --scale-rule-http-concurrency 50
 ```
 
+## Health Checks
+
+Both services implement health and readiness endpoints:
+
+- **`/health`** - Liveness probe: checks if the service is alive
+- **`/ready`** - Readiness probe: checks if the service is ready to accept traffic
+
+**Note**: The Discord bot's `/ready` endpoint only checks Discord client connectivity to avoid circular dependencies during startup.
+
 ## Troubleshooting
+
+### Container Times Out and Scales to Zero
+
+**Symptoms**: Container restarts every 5 minutes, errors, and scales to 0 replicas.
+
+**Causes**:
+1. `minReplicas` set to 0 (container scales down when idle)
+2. Circular dependencies in health checks (services waiting for each other during startup)
+3. Missing or misconfigured health probes
+
+**Solutions**:
+
+1. **Set minimum replicas to 1** (especially critical for Discord bots):
+   ```bash
+   az containerapp update \
+     --name fbf-buddy-discord-bot \
+     --resource-group peter-corp-rg \
+     --min-replicas 1
+   ```
+
+2. **Remove circular dependencies**: Ensure readiness checks don't depend on other services being ready first
+
+3. **Configure proper health checks**: Use `/health` for liveness and `/ready` for readiness
 
 ### Container Won't Start
 

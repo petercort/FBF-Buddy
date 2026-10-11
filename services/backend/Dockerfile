@@ -4,11 +4,11 @@ FROM node:24-slim
 # Set the working directory
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json if exists
-COPY package.json ./
+# Copy dependency manifests first for reproducible, cacheable installs
+COPY package.json package-lock.json ./
 
-# Install dependencies without lockfile to avoid npm issues
-RUN npm install --omit=dev --no-package-lock
+# Install production dependencies from the lockfile
+RUN npm ci --omit=dev
 
 # Copy the rest of the application code
 COPY . .

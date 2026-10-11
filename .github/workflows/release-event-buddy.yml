@@ -4,19 +4,19 @@ on:
   workflow_dispatch:
       
 env:
+  ACR_NAME: fbfregistry
   DISCORD_BOT_IMAGE_NAME: fbf-buddy-discord-bot
   BACKEND_IMAGE_NAME: fbf-buddy-backend
   RESOURCE_GROUP: peter-corp-rg
-  DISCORD_BOT_CONTAINER_APP: fbf-buddy-discord-bot
-  BACKEND_CONTAINER_APP: fbf-buddy-backend
+  DISCORD_BOT_APP: discord-buddy
+  BACKEND_APP: fbf-events
+  IDENTITY_NAME: key-master
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      packages: write
-      id-token: write
     outputs:
       version: ${{ steps.increment-version.outputs.NEW_VERSION }}
       discord-bot-image: ${{ steps.push-discord-bot.outputs.IMAGE_ID }}
@@ -72,7 +72,7 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git add package.json services/backend/package.json services/discord-bot/package.json app.version
-        git commit -m "chore: bump version to ${{ steps.increment-version.outputs.NEW_VERSION }}" || echo "No changes to commit"
+        git commit -m "chore: bump version to ${{ steps.increment-version.outputs.NEW_VERSION }} [skip ci]" || echo "No changes to commit"
         git push || echo "No changes to push"
     
     # Build Discord Bot
@@ -96,7 +96,11 @@ jobs:
           services/backend
     
     - name: Log in to registry
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      run: |
+        echo "${{ secrets.FBFBUDDYBACKEND_REGISTRY_PASSWORD }}" |
+          docker login "$ACR_NAME.azurecr.io" \
+            --username "${{ secrets.FBFBUDDYBACKEND_REGISTRY_USERNAME }}" \
+            --password-stdin
 
     # Push Discord Bot
     - name: Push Discord Bot image
@@ -104,8 +108,7 @@ jobs:
       env: 
         VERSION: ${{ steps.increment-version.outputs.NEW_VERSION }}
       run: |
-        IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$DISCORD_BOT_IMAGE_NAME
-        IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+        IMAGE_ID=$ACR_NAME.azurecr.io/$DISCORD_BOT_IMAGE_NAME
 
         echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_OUTPUT
         docker tag $DISCORD_BOT_IMAGE_NAME $IMAGE_ID:$VERSION
@@ -119,8 +122,7 @@ jobs:
       env: 
         VERSION: ${{ steps.increment-version.outputs.NEW_VERSION }}
       run: |
-        IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$BACKEND_IMAGE_NAME
-        IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+        IMAGE_ID=$ACR_NAME.azurecr.io/$BACKEND_IMAGE_NAME
 
         echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_OUTPUT
         docker tag $BACKEND_IMAGE_NAME $IMAGE_ID:$VERSION
@@ -146,76 +148,119 @@ jobs:
         title: ${{ needs.build.outputs.version }}
         tag: ${{ needs.build.outputs.version }}
         
-  deploy:
+  deploy-backend:
     needs: [build, create-release]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
+      contents: read
     steps:
-    - name: Azure login
+    - name: Azure login for backend
       uses: azure/login@v3
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        client-id: ${{ secrets.FBFBUDDYBACKEND_AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.FBFBUDDYBACKEND_AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.FBFBUDDYBACKEND_AZURE_SUBSCRIPTION_ID }}
     
-    # Enable Managed Identity on Discord Bot
-    - name: Enable Managed Identity on Discord Bot
+    - name: Deploy backend to App Service
+      env:
+        BACKEND_IMAGE: ${{ needs.build.outputs.backend-image }}:latest
       run: |
-        az containerapp identity assign \
-          --name ${{ env.DISCORD_BOT_CONTAINER_APP }} \
-          --resource-group ${{ env.RESOURCE_GROUP }} \
-          --system-assigned
-        
-        # Get the principal ID
-        DISCORD_BOT_PRINCIPAL_ID=$(az containerapp identity show \
-          --name ${{ env.DISCORD_BOT_CONTAINER_APP }} \
-          --resource-group ${{ env.RESOURCE_GROUP }} \
-          --query principalId -o tsv)
-        
-        # Grant Key Vault access
-        az keyvault set-policy \
-          --name ${{ secrets.KEY_VAULT_NAME }} \
-          --object-id $DISCORD_BOT_PRINCIPAL_ID \
-          --secret-permissions get list
-    
-    # Enable Managed Identity on Backend
-    - name: Enable Managed Identity on Backend
+        SUBSCRIPTION_ID=$(az account show --query id --output tsv)
+        IDENTITY_CLIENT_ID=$(az identity show \
+          --resource-group "$RESOURCE_GROUP" \
+          --name "$IDENTITY_NAME" \
+          --query clientId \
+          --output tsv)
+
+        BODY=$(jq -n \
+          --arg image "$BACKEND_IMAGE" \
+          --arg identityClientId "$IDENTITY_CLIENT_ID" \
+          '{
+            properties: {
+              image: $image,
+              isMain: true,
+              targetPort: "3000",
+              authType: "UserAssigned",
+              userManagedIdentityClientId: $identityClientId,
+              inheritAppSettingsAndConnectionStrings: true
+            }
+          }')
+        az rest \
+          --method put \
+          --url "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Web/sites/$BACKEND_APP/sitecontainers/main?api-version=2024-11-01" \
+          --body "$BODY" \
+          --output none
+
+        HOST_NAME=$(az webapp show \
+          --resource-group "$RESOURCE_GROUP" \
+          --name "$BACKEND_APP" \
+          --query defaultHostName \
+          --output tsv)
+        sleep 30
+        for attempt in {1..30}; do
+          if curl --fail --silent --show-error "https://$HOST_NAME/ready"; then
+            exit 0
+          fi
+          echo "Waiting for $BACKEND_APP to become ready (attempt $attempt/30)"
+          sleep 10
+        done
+        exit 1
+
+  deploy-discord-bot:
+    needs: [build, create-release]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+    - name: Azure login for Discord bot
+      uses: azure/login@v3
+      with:
+        client-id: ${{ secrets.FBFBUDDYDISCORDBOT_AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.FBFBUDDYDISCORDBOT_AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.FBFBUDDYDISCORDBOT_AZURE_SUBSCRIPTION_ID }}
+
+    - name: Deploy Discord bot to App Service
+      env:
+        DISCORD_BOT_IMAGE: ${{ needs.build.outputs.discord-bot-image }}:latest
       run: |
-        az containerapp identity assign \
-          --name ${{ env.BACKEND_CONTAINER_APP }} \
-          --resource-group ${{ env.RESOURCE_GROUP }} \
-          --system-assigned
-        
-        # Get the principal ID
-        BACKEND_PRINCIPAL_ID=$(az containerapp identity show \
-          --name ${{ env.BACKEND_CONTAINER_APP }} \
-          --resource-group ${{ env.RESOURCE_GROUP }} \
-          --query principalId -o tsv)
-        
-        # Grant Key Vault access
-        az keyvault set-policy \
-          --name ${{ secrets.KEY_VAULT_NAME }} \
-          --object-id $BACKEND_PRINCIPAL_ID \
-          --secret-permissions get list
-    
-    # Deploy Discord Bot
-    - name: Deploy Discord Bot to Azure Container App
-      uses: azure/container-apps-deploy-action@v2
-      with:
-        containerAppName: ${{ env.DISCORD_BOT_CONTAINER_APP }}
-        resourceGroup: ${{ env.RESOURCE_GROUP }}
-        imageToDeploy: ${{ needs.build.outputs.discord-bot-image }}:latest
-        environmentVariables: |
-          KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }}
-          BACKEND_API_URL=http://fbf-buddy-backend:3000
-    
-    # Deploy Backend
-    - name: Deploy Backend to Azure Container App
-      uses: azure/container-apps-deploy-action@v2
-      with:
-        containerAppName: ${{ env.BACKEND_CONTAINER_APP }}
-        resourceGroup: ${{ env.RESOURCE_GROUP }}
-        imageToDeploy: ${{ needs.build.outputs.backend-image }}:latest
-        environmentVariables: |
-          KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }}
-          DISCORD_BOT_API_URL=http://fbf-buddy-discord-bot:3001
-  
+        SUBSCRIPTION_ID=$(az account show --query id --output tsv)
+        IDENTITY_CLIENT_ID=$(az identity show \
+          --resource-group "$RESOURCE_GROUP" \
+          --name "$IDENTITY_NAME" \
+          --query clientId \
+          --output tsv)
+        BODY=$(jq -n \
+          --arg image "$DISCORD_BOT_IMAGE" \
+          --arg identityClientId "$IDENTITY_CLIENT_ID" \
+          '{
+            properties: {
+              image: $image,
+              isMain: true,
+              targetPort: "3001",
+              authType: "UserAssigned",
+              userManagedIdentityClientId: $identityClientId,
+              inheritAppSettingsAndConnectionStrings: true
+            }
+          }')
+        az rest \
+          --method put \
+          --url "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Web/sites/$DISCORD_BOT_APP/sitecontainers/discord-buddy?api-version=2024-11-01" \
+          --body "$BODY" \
+          --output none
+
+        HOST_NAME=$(az webapp show \
+          --resource-group "$RESOURCE_GROUP" \
+          --name "$DISCORD_BOT_APP" \
+          --query defaultHostName \
+          --output tsv)
+        sleep 30
+        for attempt in {1..30}; do
+          if curl --fail --silent --show-error "https://$HOST_NAME/ready"; then
+            exit 0
+          fi
+          echo "Waiting for $DISCORD_BOT_APP to become ready (attempt $attempt/30)"
+          sleep 10
+        done
+        exit 1
