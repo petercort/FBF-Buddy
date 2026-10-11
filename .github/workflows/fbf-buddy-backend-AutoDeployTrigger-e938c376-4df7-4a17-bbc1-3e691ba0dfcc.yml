@@ -76,3 +76,18 @@ jobs:
             --url "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Web/sites/$APP_NAME/sitecontainers/$CONTAINER_NAME?api-version=2024-11-01" \
             --body "$BODY" \
             --output none
+
+          HOST_NAME=$(az webapp show \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$APP_NAME" \
+            --query defaultHostName \
+            --output tsv)
+          sleep 30
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error "https://$HOST_NAME/ready"; then
+              exit 0
+            fi
+            echo "Waiting for $APP_NAME to become ready (attempt $attempt/30)"
+            sleep 10
+          done
+          exit 1
