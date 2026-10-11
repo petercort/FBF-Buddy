@@ -1,408 +1,170 @@
-# Azure Container Apps Deployment Guide
+# Azure App Service Deployment Guide
 
-This application is deployed to Azure Container Apps as two separate services:
-- **Discord Bot Service** - Handles Discord interactions and commands
-- **Backend Service** - Manages Strava webhooks and API endpoints
+FBF Buddy runs as two Linux containers on one shared Azure App Service B1 plan:
+
+- `discord-buddy` runs the Discord gateway client and its internal messaging API on port 3001.
+- `fbf-events` runs the public backend API and Strava webhook listener on port 3000.
+
+Both apps use Always On to avoid cold starts. They share the plan's compute allocation but have independent container images, settings, identities, health checks, and deployments.
 
 ## Architecture
 
-```
-┌─────────────────────────────────────┐
-│   Azure Container Apps Environment  │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │  Discord Bot Container App  │   │
-│  │  Port: 3001                 │   │
-│  └─────────────────────────────┘   │
-│              │                      │
-│              ▼                      │
-│  ┌─────────────────────────────┐   │
-│  │  Backend Container App      │   │
-│  │  Port: 3000                 │   │
-│  └─────────────────────────────┘   │
-│              │                      │
-└──────────────┼──────────────────────┘
-               │
-               ▼
-    ┌──────────────────────┐
-    │  Azure PostgreSQL    │
-    │  (via Key Vault)     │
-    └──────────────────────┘
+```text
+                     Azure App Service B1 plan
+┌─────────────────────────────────────────────────────────┐
+│                                                         │
+│  discord-buddy                  fbf-events               │
+│  Discord gateway                Backend/API/webhooks     │
+│  Port 3001                      Port 3000                │
+│       │                              │                   │
+│       └──────── HTTPS ───────────────┘                   │
+│                                                         │
+└───────────────────────┬─────────────────────────────────┘
+                        │
+              Managed identity: key-master
+                        │
+             ┌──────────┴──────────┐
+             │                     │
+      Azure Key Vault       Azure PostgreSQL
 ```
 
-## Prerequisites
+Container images are stored in `fbfregistry.azurecr.io`. The `key-master` user-assigned identity has:
 
-- Azure subscription
-- Azure CLI installed
-- GitHub repository with secrets configured
-- Docker images built and pushed to GitHub Container Registry (GHCR)
+- `AcrPull` on the registry.
+- `get` and `list` permissions on the `peter-corp-kv` production Key Vault.
 
-## Initial Setup
+Do not add client secrets to App Service settings. `AZURE_CLIENT_ID` selects the user-assigned identity used by `DefaultAzureCredential`.
 
-### 1. Create Resource Group
+## Live Resources
 
-```bash
-az group create \
-  --name peter-corp-rg \
-  --location eastus
+| Resource | Name |
+|---|---|
+| Resource group | `peter-corp-rg` |
+| App Service plan | `ASP-petercorprg-b7eb` |
+| Discord app | `discord-buddy` |
+| Backend app | `fbf-events` |
+| Container registry | `fbfregistry` |
+| Managed identity | `key-master` |
+| Key Vault | `peter-corp-kv` |
+
+## Runtime Settings
+
+### Discord bot
+
+```text
+KEY_VAULT_NAME=peter-corp-kv
+AZURE_CLIENT_ID=<key-master client ID>
+BACKEND_API_URL=https://fbf-events-b8ezdbc6g3gwc4dz.eastus2-01.azurewebsites.net
+WEBSITES_ENABLE_APP_SERVICE_STORAGE=false
+WEBSITE_HEALTHCHECK_MAXPINGFAILURES=5
 ```
 
-### 2. Create Container Apps Environment
+### Backend
 
-```bash
-az containerapp env create \
-  --name fbf-buddy-env \
-  --resource-group peter-corp-rg \
-  --location eastus
+```text
+KEY_VAULT_NAME=peter-corp-kv
+AZURE_CLIENT_ID=<key-master client ID>
+DISCORD_BOT_API_URL=https://discord-buddy-hscvd9c6efa4e0ff.eastus2-01.azurewebsites.net
+WEBSITES_ENABLE_APP_SERVICE_STORAGE=false
+WEBSITE_HEALTHCHECK_MAXPINGFAILURES=5
 ```
 
-### 3. Create Container App for Discord Bot
+Both apps must have:
 
-```bash
-az containerapp create \
-  --name fbf-buddy-discord-bot \
-  --resource-group peter-corp-rg \
-  --environment fbf-buddy-env \
-  --image ghcr.io/petercort/fbf-buddy-discord-bot:latest \
-  --target-port 3001 \
-  --ingress internal \
-  --min-replicas 1 \
-  --max-replicas 1 \
-  --cpu 0.5 \
-  --memory 1Gi \
-  --registry-server ghcr.io \
-  --registry-username <your-github-username> \
-  --registry-password <your-github-pat> \
-  --env-vars \
-    KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }} \
-    AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} \
-    AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} \
-  --secrets azure-client-secret=${{ secrets.AZURE_CLIENT_SECRET }}
-```
-
-### 4. Create Container App for Backend
-
-```bash
-az containerapp create \
-  --name fbf-buddy-backend \
-  --resource-group peter-corp-rg \
-  --environment fbf-buddy-env \
-  --image ghcr.io/petercort/fbf-buddy-backend:latest \
-  --target-port 3000 \
-  --ingress external \
-  --min-replicas 1 \
-  --max-replicas 2 \
-  --cpu 0.5 \
-  --memory 1Gi \
-  --registry-server ghcr.io \
-  --registry-username <your-github-username> \
-  --registry-password <your-github-pat> \
-  --env-vars \
-    KEY_VAULT_NAME=${{ secrets.KEY_VAULT_NAME }} \
-    AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} \
-    AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} \
-    DISCORD_BOT_API_URL=http://fbf-buddy-discord-bot:3001 \
-  --secrets azure-client-secret=${{ secrets.AZURE_CLIENT_SECRET }}
-```
-
-## Environment Variables
-
-Both services require the following environment variables:
-
-### Required for Azure Key Vault Access (Managed Identity - Recommended)
-
-**With Managed Identity (No credentials needed in production!):**
-- `KEY_VAULT_NAME` - Name of your Azure Key Vault
-
-The application uses Azure Managed Identity to authenticate to Key Vault when running in Azure Container Apps. This eliminates the need to store credentials as environment variables or secrets.
-
-### For Local Development
-
-When running locally, `DefaultAzureCredential` falls back to:
-1. **Azure CLI** - Run `az login` before starting the app
-2. **Environment Variables** (if Azure CLI not available):
-   - `AZURE_CLIENT_ID` - Service Principal Client ID
-   - `AZURE_TENANT_ID` - Azure Tenant ID
-   - `AZURE_CLIENT_SECRET` - Service Principal Secret
-
-### Backend-Specific
-- `DISCORD_BOT_API_URL` - Internal URL to Discord Bot service (http://fbf-buddy-discord-bot:3001)
-
-## Managed Identity Setup
-
-### Initial Setup (One-Time)
-
-Run the provided script to enable Managed Identity and grant Key Vault access:
-
-```bash
-export KEY_VAULT_NAME=peter-corp-dev
-./enable-managed-identity.sh
-```
-
-Or manually:
-
-```bash
-# Enable Managed Identity on Discord Bot
-az containerapp identity assign \
-  --name fbf-buddy-discord-bot \
-  --resource-group peter-corp-rg \
-  --system-assigned
-
-# Get the principal ID
-DISCORD_BOT_PRINCIPAL_ID=$(az containerapp identity show \
-  --name fbf-buddy-discord-bot \
-  --resource-group peter-corp-rg \
-  --query principalId -o tsv)
-
-# Grant Key Vault access
-az keyvault set-policy \
-  --name peter-corp-dev \
-  --object-id $DISCORD_BOT_PRINCIPAL_ID \
-  --secret-permissions get list
-
-# Repeat for Backend
-az containerapp identity assign \
-  --name fbf-buddy-backend \
-  --resource-group peter-corp-rg \
-  --system-assigned
-
-BACKEND_PRINCIPAL_ID=$(az containerapp identity show \
-  --name fbf-buddy-backend \
-  --resource-group peter-corp-rg \
-  --query principalId -o tsv)
-
-az keyvault set-policy \
-  --name peter-corp-dev \
-  --object-id $BACKEND_PRINCIPAL_ID \
-  --secret-permissions get list
-```
-
-### Benefits of Managed Identity
-
-✅ **No secrets to manage** - Azure handles authentication automatically  
-✅ **Automatic rotation** - Credentials are managed by Azure  
-✅ **More secure** - No credentials in environment variables or secrets  
-✅ **Simpler deployment** - Only need `KEY_VAULT_NAME` environment variable  
-
-
-## GitHub Secrets Required
-
-Configure these secrets in your GitHub repository:
-
-1. **AZURE_CREDENTIALS** - Azure service principal credentials for GitHub Actions (JSON format):
-   ```json
-   {
-     "clientId": "your-client-id",
-     "clientSecret": "your-client-secret",
-     "subscriptionId": "your-subscription-id",
-     "tenantId": "your-tenant-id"
-   }
-   ```
-   
-   **Note**: This is only used by GitHub Actions to deploy to Azure. The deployed Container Apps use Managed Identity instead.
-
-2. **KEY_VAULT_NAME** - Your Azure Key Vault name (e.g., `peter-corp-dev`)
-
-### Optional (Only for local development without Azure CLI)
-
-These are NOT needed for production deployments with Managed Identity:
-
-3. **AZURE_CLIENT_ID** - Service Principal Client ID (for local dev only)
-4. **AZURE_TENANT_ID** - Azure Tenant ID (for local dev only)
-5. **AZURE_CLIENT_SECRET** - Service Principal Secret (for local dev only)
+- Always On enabled.
+- HTTPS Only enabled.
+- `/health` configured as the App Service health check.
+- HTTP/2 enabled.
 
 ## Continuous Deployment
 
-The GitHub Actions workflow (`.github/workflows/release-event-buddy.yml`) automatically:
+The service-specific workflows build only when their service changes:
 
-1. Builds both Docker images on push to `main` branch
-2. Pushes images to GitHub Container Registry
-3. Creates a GitHub release
-4. **Enables Managed Identity and grants Key Vault access** (if not already enabled)
-5. Deploys both services to Azure Container Apps
+- `.github/workflows/fbf-buddy-backend-AutoDeployTrigger-e938c376-4df7-4a17-bbc1-3e691ba0dfcc.yml`
+- `.github/workflows/fbf-buddy-discord-bot-AutoDeployTrigger-3b850ea5-2d6e-4982-9ba7-62c6858f209e.yml`
 
-## Monitoring and Logs
+Each workflow:
 
-### View Container App Logs
+1. Authenticates to Azure through GitHub OIDC.
+2. Builds the service image from its Dockerfile.
+3. Pushes the commit-tagged image to Azure Container Registry.
+4. Updates the App Service site-container definition through the App Service REST API.
 
-```bash
-# Discord Bot logs
-az containerapp logs show \
-  --name fbf-buddy-discord-bot \
-  --resource-group peter-corp-rg \
-  --follow
+The manually triggered `.github/workflows/release-event-buddy.yml` publishes versioned and `latest` images to the same registry, creates the GitHub release, and deploys both apps.
 
-# Backend logs
-az containerapp logs show \
-  --name fbf-buddy-backend \
-  --resource-group peter-corp-rg \
-  --follow
-```
+## Validation
 
-### Check Container App Status
+Check liveness:
 
 ```bash
-az containerapp show \
-  --name fbf-buddy-discord-bot \
-  --resource-group peter-corp-rg \
-  --query "properties.runningStatus"
+curl --fail \
+  https://discord-buddy-hscvd9c6efa4e0ff.eastus2-01.azurewebsites.net/health
+
+curl --fail \
+  https://fbf-events-b8ezdbc6g3gwc4dz.eastus2-01.azurewebsites.net/health
 ```
 
-## Scaling
+Check dependencies:
 
-### Manual Scaling
+```bash
+curl --fail \
+  https://discord-buddy-hscvd9c6efa4e0ff.eastus2-01.azurewebsites.net/ready
+
+curl --fail \
+  https://fbf-events-b8ezdbc6g3gwc4dz.eastus2-01.azurewebsites.net/ready
+```
+
+The bot readiness response must report both `discordClient` and `backendApi` as `true`. The backend readiness response must report both `keyVault` and `database` as `true`.
+
+## Strava Webhook Cutover
+
+The Strava webhook callback must point to:
+
+```text
+https://fbf-events-b8ezdbc6g3gwc4dz.eastus2-01.azurewebsites.net/webhook
+```
+
+Before retiring the old Container Apps backend:
+
+1. Confirm that the Strava application is active.
+2. Query the current push subscription.
+3. Delete the old subscription if it targets the Container Apps hostname.
+4. Create a subscription with the App Service callback and the `stravaVerifyToken` value from Key Vault.
+5. Trigger a test cycling activity and verify backend processing and Discord delivery.
+6. Deactivate the old backend Container Apps revision.
+
+The old backend must remain available until this callback is verified. Its `DISCORD_BOT_API_URL` should target the App Service bot so only one Discord gateway client is active.
+
+## Rollback
+
+The App Service migration can be rolled back without rebuilding an image.
+
+Reactivate the previous Discord Container Apps revision:
+
+```bash
+az containerapp revision activate \
+  --resource-group peter-corp-rg \
+  --name fbf-buddy-discord-bot \
+  --revision <revision-name>
+```
+
+Restore the old backend bot URL if needed:
 
 ```bash
 az containerapp update \
+  --resource-group peter-corp-rg \
   --name fbf-buddy-backend \
-  --resource-group peter-corp-rg \
-  --min-replicas 1 \
-  --max-replicas 5
+  --set-env-vars \
+    DISCORD_BOT_API_URL=https://fbf-buddy-discord-bot.happyplant-c6ea055c.westus2.azurecontainerapps.io
 ```
 
-### Auto-scaling Rules
+Do not delete the Container Apps resources until the App Service endpoints, Discord commands, and Strava webhook have been stable for an agreed observation period.
 
-```bash
-az containerapp update \
-  --name fbf-buddy-backend \
-  --resource-group peter-corp-rg \
-  --scale-rule-name http-scale \
-  --scale-rule-type http \
-  --scale-rule-http-concurrency 50
-```
+## Cost Follow-up
 
-## Troubleshooting
+After the migration is stable:
 
-### Container Won't Start
-
-1. Check logs for errors:
-   ```bash
-   az containerapp logs show --name <app-name> --resource-group peter-corp-rg --tail 100
-   ```
-
-2. Verify environment variables are set:
-   ```bash
-   az containerapp show --name <app-name> --resource-group peter-corp-rg --query "properties.template.containers[0].env"
-   ```
-
-3. Check Managed Identity and Key Vault access:
-   ```bash
-   # Verify Managed Identity is enabled
-   az containerapp identity show --name <app-name> --resource-group peter-corp-rg
-   
-   # Check Key Vault access policies
-   az keyvault show --name peter-corp-dev --query "properties.accessPolicies"
-   ```
-
-### Authentication Issues
-
-If you see `ManagedIdentityCredential` authentication errors:
-
-**Solution 1: Ensure Managed Identity is enabled and has Key Vault access**
-
-```bash
-# Run the setup script
-export KEY_VAULT_NAME=peter-corp-dev
-./enable-managed-identity.sh
-```
-
-**Solution 2: Check if Managed Identity has correct permissions**
-
-```bash
-# Get the Managed Identity principal ID
-PRINCIPAL_ID=$(az containerapp identity show \
-  --name fbf-buddy-backend \
-  --resource-group peter-corp-rg \
-  --query principalId -o tsv)
-
-# Grant Key Vault access
-az keyvault set-policy \
-  --name peter-corp-dev \
-  --object-id $PRINCIPAL_ID \
-  --secret-permissions get list
-```
-
-### For Local Development
-
-If authentication fails locally:
-
-1. **Use Azure CLI** (easiest):
-   ```bash
-   az login
-   ```
-
-2. **Or set environment variables**:
-   ```bash
-   export KEY_VAULT_NAME=peter-corp-dev
-   export AZURE_TENANT_ID=your-tenant-id
-   export AZURE_CLIENT_ID=your-client-id
-   export AZURE_CLIENT_SECRET=your-client-secret
-   ```
-
-```bash
-# Grant Key Vault access to service principal
-az keyvault set-policy \
-  --name peter-corp-dev \
-  --spn <AZURE_CLIENT_ID> \
-  --secret-permissions get list
-
-# Verify environment variables are set correctly
-az containerapp show \
-  --name fbf-buddy-backend \
-  --resource-group peter-corp-rg \
-  --query "properties.template.containers[0].env" \
-  --output table
-```
-
-### Image Pull Issues
-
-Ensure GitHub Container Registry credentials are correct:
-
-```bash
-az containerapp registry set \
-  --name <app-name> \
-  --resource-group peter-corp-rg \
-  --server ghcr.io \
-  --username <github-username> \
-  --password <github-pat>
-```
-
-## Cost Optimization
-
-- **Development**: Use 0.25 CPU / 0.5 Gi memory with min replicas = 0 (serverless)
-- **Production**: Use 0.5 CPU / 1 Gi memory with min replicas = 1
-
-### Enable Serverless Mode (Scale to Zero)
-
-```bash
-az containerapp update \
-  --name fbf-buddy-discord-bot \
-  --resource-group peter-corp-rg \
-  --min-replicas 0
-```
-
-## Useful Commands
-
-```bash
-# List all container apps
-az containerapp list --resource-group peter-corp-rg --output table
-
-# Restart a container app
-az containerapp restart --name <app-name> --resource-group peter-corp-rg
-
-# Delete a container app
-az containerapp delete --name <app-name> --resource-group peter-corp-rg
-
-# Get ingress URL
-az containerapp show \
-  --name fbf-buddy-backend \
-  --resource-group peter-corp-rg \
-  --query "properties.configuration.ingress.fqdn" \
-  --output tsv
-```
-
-## References
-
-- [Azure Container Apps Documentation](https://learn.microsoft.com/en-us/azure/container-apps/)
-- [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
-- [Azure Key Vault](https://learn.microsoft.com/en-us/azure/key-vault/)
+1. Delete the retired Container Apps and their environment if no other apps use it.
+2. Downgrade `fbfregistry` from Premium to Basic after confirming no Premium-only features are required.
+3. Retain only the necessary recent image tags.
+4. Remove unused Log Analytics workspaces and identities after checking their references.

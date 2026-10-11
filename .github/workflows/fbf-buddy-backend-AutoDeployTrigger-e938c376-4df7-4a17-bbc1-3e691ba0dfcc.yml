@@ -1,27 +1,31 @@
-name: Trigger auto deployment for fbf-buddy-backend
+name: Deploy backend to App Service
 
-# When this action will be executed
 on:
-  # Automatically trigger it when detected changes in repo
   push:
-    branches: 
-      [ main ]
+    branches:
+      - main
     paths:
-    - '**'
-    - '.github/workflows/fbf-buddy-backend-AutoDeployTrigger-e938c376-4df7-4a17-bbc1-3e691ba0dfcc.yml'
+      - 'services/backend/**'
+      - '.github/workflows/fbf-buddy-backend-AutoDeployTrigger-e938c376-4df7-4a17-bbc1-3e691ba0dfcc.yml'
+  workflow_dispatch:
 
-  # Allow manual trigger 
-  workflow_dispatch:      
+env:
+  ACR_NAME: fbfregistry
+  APP_NAME: fbf-events
+  CONTAINER_NAME: main
+  IDENTITY_NAME: key-master
+  IMAGE_NAME: fbf-buddy-backend
+  RESOURCE_GROUP: peter-corp-rg
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    permissions: 
-      id-token: write #This is required for requesting the OIDC JWT Token
-      contents: read #Required when GH token is used to authenticate with private repo
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
-      - name: Checkout to the branch
+      - name: Checkout
         uses: actions/checkout@v7
 
       - name: Azure Login
@@ -31,19 +35,44 @@ jobs:
           tenant-id: ${{ secrets.FBFBUDDYBACKEND_AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.FBFBUDDYBACKEND_AZURE_SUBSCRIPTION_ID }}
 
-      - name: Build and push container image to registry
-        uses: azure/container-apps-deploy-action@v2
-        with:
-          appSourcePath: ${{ github.workspace }}/services/backend
-          _dockerfilePathKey_: _dockerfilePath_
-          _targetLabelKey_: _targetLabel_
-          registryUrl: fbfregistry.azurecr.io
-          registryUsername: ${{ secrets.FBFBUDDYBACKEND_REGISTRY_USERNAME }}
-          registryPassword: ${{ secrets.FBFBUDDYBACKEND_REGISTRY_PASSWORD }}
-          containerAppName: fbf-buddy-backend
-          resourceGroup: peter-corp-rg
-          imageToBuild: fbfregistry.azurecr.io/fbf-buddy-backend:${{ github.sha }}
-          _buildArgumentsKey_: |
-            _buildArgumentsValues_
+      - name: Log in to Azure Container Registry
+        run: |
+          echo "${{ secrets.FBFBUDDYBACKEND_REGISTRY_PASSWORD }}" |
+            docker login "$ACR_NAME.azurecr.io" \
+              --username "${{ secrets.FBFBUDDYBACKEND_REGISTRY_USERNAME }}" \
+              --password-stdin
 
+      - name: Build and push image
+        run: |
+          IMAGE="$ACR_NAME.azurecr.io/$IMAGE_NAME:${{ github.sha }}"
+          docker build --file services/backend/Dockerfile --tag "$IMAGE" services/backend
+          docker push "$IMAGE"
 
+      - name: Deploy image to App Service
+        run: |
+          SUBSCRIPTION_ID=$(az account show --query id --output tsv)
+          IDENTITY_CLIENT_ID=$(az identity show \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$IDENTITY_NAME" \
+            --query clientId \
+            --output tsv)
+          IMAGE="$ACR_NAME.azurecr.io/$IMAGE_NAME:${{ github.sha }}"
+          BODY=$(jq -n \
+            --arg image "$IMAGE" \
+            --arg identityClientId "$IDENTITY_CLIENT_ID" \
+            '{
+              properties: {
+                image: $image,
+                isMain: true,
+                targetPort: "3000",
+                authType: "UserAssigned",
+                userManagedIdentityClientId: $identityClientId,
+                inheritAppSettingsAndConnectionStrings: true
+              }
+            }')
+
+          az rest \
+            --method put \
+            --url "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Web/sites/$APP_NAME/sitecontainers/$CONTAINER_NAME?api-version=2024-11-01" \
+            --body "$BODY" \
+            --output none
