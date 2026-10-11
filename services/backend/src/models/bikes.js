@@ -25,6 +25,11 @@ export default (sequelize, DataTypes) => {
     distance: {
         type: DataTypes.INTEGER,
     },
+    retired: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+    },
     lastWaxedDate: {
         type: DataTypes.STRING,
         defaultValue: 'NEVER',

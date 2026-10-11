@@ -4,6 +4,7 @@ import { initializeDatabase, testDatabaseConnection } from './db-objects.js';
 import axios from 'axios';
 import { firstTimeAuth, getStravaAuthentication } from './shared-library/strava-authentication.js';
 import { getAzureSecretsClient } from './shared-library/azure-secrets.js';
+import { retireInactiveBikes } from './shared-library/bike-reconciliation.js';
 
 const STRAVA_WEBHOOK_PORT = 3000;
 const DISCORD_BOT_API_URL = process.env.DISCORD_BOT_API_URL || 'http://localhost:3001';
@@ -297,7 +298,7 @@ app.get('/api/users/:userId/bikes', requireDatabase, async (req, res) => {
   try {
     const { userId } = req.params;
     const { BikesTable } = await getTables();
-    const bikes = await BikesTable.findAll({ where: { userId } });
+    const bikes = await BikesTable.findAll({ where: { userId, retired: false } });
     res.json(bikes);
   } catch (error) {
     console.error('Error fetching bikes:', error);
@@ -311,7 +312,7 @@ app.get('/api/users/:userId/bikes/by-name/:bikeName', requireDatabase, async (re
     const { userId, bikeName } = req.params;
     const { BikesTable } = await getTables();
     const bike = await BikesTable.findOne({ 
-      where: { userId, name: bikeName } 
+      where: { userId, name: bikeName, retired: false }
     });
     if (!bike) {
       return res.status(404).json({ error: 'Bike not found' });
@@ -330,7 +331,7 @@ app.post('/api/users/:userId/bikes/:bikeName/wax', requireDatabase, async (req, 
     const { BikesTable } = await getTables();
     
     const bike = await BikesTable.findOne({ 
-      where: { userId, name: bikeName } 
+      where: { userId, name: bikeName, retired: false }
     });
     
     if (!bike) {
@@ -339,11 +340,11 @@ app.post('/api/users/:userId/bikes/:bikeName/wax', requireDatabase, async (req, 
     
     await BikesTable.update(
       { lastWaxedDistance: bike.distance },
-      { where: { bikeId: bike.bikeId, userId } }
+      { where: { bikeId: bike.bikeId, userId, retired: false } }
     );
     
     const updatedBike = await BikesTable.findOne({ 
-      where: { userId, name: bikeName } 
+      where: { userId, name: bikeName, retired: false }
     });
     
     res.json(updatedBike);
@@ -373,7 +374,7 @@ app.post('/api/users/:userId/bikes/sync', requireDatabase, async (req, res) => {
     
     await setupBikes(athleteId, userId, stravaAccessToken);
     
-    const bikes = await BikesTable.findAll({ where: { userId } });
+    const bikes = await BikesTable.findAll({ where: { userId, retired: false } });
     res.json(bikes);
   } catch (error) {
     console.error('Error syncing bikes:', error);
@@ -469,19 +470,32 @@ async function setupBikes(athleteId, userId, stravaAccessToken) {
     const athleteResponse = await axios.get(`https://www.strava.com/api/v3/athletes/${athleteId}`, {
       headers: { Authorization: `Bearer ${stravaAccessToken}` }
     });
+    const activeBikeIds = [];
     for (const bike of athleteResponse.data.bikes) {
       const bikeData = await axios.get(`https://www.strava.com/api/v3/gear/${bike.id}`, {
         headers: { Authorization: `Bearer ${stravaAccessToken}` }
       });
+      if (bikeData.data.retired) {
+        continue;
+      }
+      activeBikeIds.push(bike.id);
+      const existingBike = await BikesTable.findOne({
+        where: { bikeId: bike.id, userId, retired: true }
+      });
+      if (existingBike) {
+        continue;
+      }
       await BikesTable.upsert({
         bikeId: bike.id,
         userId: userId,
         name: bike.name,
         brand: bikeData.data.brand_name,
         model: bikeData.data.model_name,
-        distance: bike.distance
+        distance: bike.distance,
+        retired: false
       });
     }
+    await retireInactiveBikes(BikesTable, userId, activeBikeIds);
   } catch (error) {
     console.error('Error fetching athlete data:', error.status, error.message);
   }
@@ -492,7 +506,7 @@ async function syncBike(bikeId, distance, userId) {
     const { BikesTable } = await getTables();
     await BikesTable.update(
       { distance },
-      { where: { bikeId, userId }, returning: true, plain: true }
+      { where: { bikeId, userId, retired: false }, returning: true, plain: true }
     );
   } catch (error) {
     console.error('Error updating data:', error);
@@ -502,7 +516,7 @@ async function syncBike(bikeId, distance, userId) {
 async function getBikeDetails(bikeId, userId) {
   try {
     const { BikesTable } = await getTables();
-    const output = await BikesTable.findOne({ where: { bikeId, userId } });
+    const output = await BikesTable.findOne({ where: { bikeId, userId, retired: false } });
     return {
       lastWaxedDistance: output.dataValues.lastWaxedDistance,
       name: output.dataValues.name
