@@ -1,13 +1,23 @@
 
 import express, { json } from 'express';
+import { Op } from 'sequelize';
 import { initializeDatabase, testDatabaseConnection } from './db-objects.js';
 import axios from 'axios';
 import { firstTimeAuth, getStravaAuthentication } from './shared-library/strava-authentication.js';
 import { getAzureSecretsClient } from './shared-library/azure-secrets.js';
 import { retireInactiveBikes } from './shared-library/bike-reconciliation.js';
+import {
+  buildRideReminderMessage,
+  buildWeeklyReminderMessage,
+  getMilesSinceWax,
+  getWaxReminderLevel,
+  isSupportedRideType
+} from './shared-library/chain-reminders.js';
 
 const STRAVA_WEBHOOK_PORT = 3000;
 const DISCORD_BOT_API_URL = process.env.DISCORD_BOT_API_URL || 'http://localhost:3001';
+const WAX_REMINDER_CHECK_INTERVAL_MS = 60 * 60 * 1000;
+const WAX_REMINDER_REPEAT_MS = 7 * 24 * 60 * 60 * 1000;
 const app = express();
 
 // Track service readiness
@@ -46,14 +56,98 @@ try {
 // Helper function to send Discord messages via the Discord bot service
 async function sendDiscordMessage(userId, message) {
   try {
-    await axios.post(`${DISCORD_BOT_API_URL}/api/send-message`, {
-      userId,
-      message
-    });
+    await axios.post(
+      `${DISCORD_BOT_API_URL}/api/send-message`,
+      { userId, message },
+      { timeout: 10000 }
+    );
     console.log(`Message sent to Discord user ${userId}`);
   } catch (error) {
-    console.error('Error sending Discord message:', error.message);
+    console.error('Error sending Discord message:', {
+      userId,
+      message: error.message,
+      status: error.response?.status,
+      response: error.response?.data
+    });
+    throw error;
   }
+}
+
+async function runWeeklyWaxReminders() {
+  const { UsersTable, BikesTable } = await getTables();
+  const cutoff = new Date(Date.now() - WAX_REMINDER_REPEAT_MS);
+  const users = await UsersTable.findAll({
+    where: {
+      strava_connected: true,
+      [Op.or]: [
+        { lastWaxReminderAt: null },
+        { lastWaxReminderAt: { [Op.lte]: cutoff } }
+      ]
+    }
+  });
+
+  for (const user of users) {
+    const bikes = await BikesTable.findAll({
+      where: { userId: user.userId, retired: false }
+    });
+    const overdueBikes = bikes
+      .map((bike) => {
+        const milesSinceWax = getMilesSinceWax(bike.distance, bike.lastWaxedDistance);
+        return {
+          name: bike.name,
+          milesSinceWax,
+          level: getWaxReminderLevel(milesSinceWax)
+        };
+      })
+      .filter((bike) => bike.level);
+
+    if (overdueBikes.length === 0) {
+      continue;
+    }
+
+    const claimedAt = new Date();
+    const previousReminderAt = user.lastWaxReminderAt;
+    const [claimed] = await UsersTable.update(
+      { lastWaxReminderAt: claimedAt },
+      {
+        where: {
+          userId: user.userId,
+          [Op.or]: [
+            { lastWaxReminderAt: null },
+            { lastWaxReminderAt: { [Op.lte]: cutoff } }
+          ]
+        }
+      }
+    );
+
+    if (claimed === 0) {
+      continue;
+    }
+
+    try {
+      await sendDiscordMessage(
+        user.userId,
+        buildWeeklyReminderMessage(overdueBikes)
+      );
+    } catch (error) {
+      await UsersTable.update(
+        { lastWaxReminderAt: previousReminderAt },
+        { where: { userId: user.userId, lastWaxReminderAt: claimedAt } }
+      );
+      console.error(`Weekly wax reminder failed for Discord user ${user.userId}:`, error.message);
+    }
+  }
+}
+
+function startWaxReminderScheduler() {
+  const run = () => {
+    runWeeklyWaxReminders().catch((error) => {
+      console.error('Weekly wax reminder check failed:', error);
+    });
+  };
+
+  run();
+  setInterval(run, WAX_REMINDER_CHECK_INTERVAL_MS);
 }
 
 // Health check endpoints
@@ -176,43 +270,27 @@ app.post('/webhook', async (req, res) => {
           headers: { Authorization: `Bearer ${stravaAccessToken}` }
         });
         
-        // Only process if it's a bike ride and has gear information
-        if (activityData.data.type !== 'Ride' || !activityData.data.gear) {
+        if (!isSupportedRideType(activityData.data.type) || !activityData.data.gear) {
           console.log(`Skipping activity ${event.object_id}: type=${activityData.data.type}, has_gear=${!!activityData.data.gear}`);
-          res.sendStatus(200);
-          return;
-        } else {
-          // show the activity data type 
-          console.log(`Processing activity ${event.object_id}: type=${activityData.data.type}, has_gear=${!!activityData.data.gear}`);
+          return res.sendStatus(200);
         }
+        console.log(`Processing activity ${event.object_id}: type=${activityData.data.type}, has_gear=${!!activityData.data.gear}`);
         
         const gearId = activityData.data.gear.id;
         const currentDistance = activityData.data.gear.distance;
-        // update the distance for the gear
         await syncBike(gearId, currentDistance, user.dataValues.userId);
         const bikeDetails = await getBikeDetails(gearId, user.dataValues.userId);
-        const lastWaxedDistance = bikeDetails.lastWaxedDistance;
-        const bikeName = bikeDetails.name;
-
-        const totalMiles = Math.round(currentDistance * 0.000621371);
-        const lastWaxedMiles = Math.round(lastWaxedDistance * 0.000621371);
-        const currentDiff = totalMiles - lastWaxedMiles;
-        if (currentDiff > 250) {
-          const message = bikeName
-            ? `Nice ride and it's time to wax your chain! ${bikeName} has ridden ${currentDiff} miles since its last wax.`
-            : `Nice ride and it's time to wax your chain! You've ridden ${currentDiff} miles since your last wax.`;
-          const id = user.dataValues.userId;
-          await sendDiscordMessage(id, message);
-        } else if (currentDiff > 150) {
-          const message = bikeName
-            ? `Nice ride! You're getting close to needing to wax your chain. ${bikeName} has ${currentDiff} miles since its last wax.`
-            : `Nice ride! You're getting close to needing to wax your chain. You've ridden ${currentDiff} miles since your last wax.`;
-          const id = user.dataValues.userId;
-          await sendDiscordMessage(id, message);
+        const milesSinceWax = getMilesSinceWax(currentDistance, bikeDetails.lastWaxedDistance);
+        if (getWaxReminderLevel(milesSinceWax)) {
+          await sendDiscordMessage(
+            user.dataValues.userId,
+            buildRideReminderMessage(bikeDetails.name, milesSinceWax)
+          );
         }
         console.log(`Updated distance for gear ${gearId} to ${Math.round(currentDistance * 0.000621371)}`);
       } catch (error) {
-        console.error('Error fetching ride data:', error);
+        console.error(`Error processing Strava activity ${event.object_id}:`, error);
+        return res.sendStatus(500);
       }
     } else {
       console.log('No user found for strava user id:', event.owner_id);
@@ -451,6 +529,7 @@ app.listen(STRAVA_WEBHOOK_PORT, async () => {
     console.log('='.repeat(60));
     dbInitialized = true;
     isReady = true;
+    startWaxReminderScheduler();
   } catch (error) {
     console.error('='.repeat(60));
     console.error('FATAL: Failed to initialize database');
@@ -502,27 +581,24 @@ async function setupBikes(athleteId, userId, stravaAccessToken) {
 }
 
 async function syncBike(bikeId, distance, userId) {
-  try {
-    const { BikesTable } = await getTables();
-    await BikesTable.update(
-      { distance },
-      { where: { bikeId, userId, retired: false }, returning: true, plain: true }
-    );
-  } catch (error) {
-    console.error('Error updating data:', error);
+  const { BikesTable } = await getTables();
+  const [updatedRows] = await BikesTable.update(
+    { distance },
+    { where: { bikeId, userId, retired: false } }
+  );
+  if (updatedRows === 0) {
+    throw new Error(`Active bike ${bikeId} was not found for Discord user ${userId}`);
   }
 }
 
 async function getBikeDetails(bikeId, userId) {
-  try {
-    const { BikesTable } = await getTables();
-    const output = await BikesTable.findOne({ where: { bikeId, userId, retired: false } });
-    return {
-      lastWaxedDistance: output.dataValues.lastWaxedDistance,
-      name: output.dataValues.name
-    };
-  } catch (error) {
-    console.error('Error finding bike details:', error);
-    return { lastWaxedDistance: 0, name: null };
+  const { BikesTable } = await getTables();
+  const output = await BikesTable.findOne({ where: { bikeId, userId, retired: false } });
+  if (!output) {
+    throw new Error(`Active bike ${bikeId} was not found for Discord user ${userId}`);
   }
+  return {
+    lastWaxedDistance: output.dataValues.lastWaxedDistance,
+    name: output.dataValues.name
+  };
 }

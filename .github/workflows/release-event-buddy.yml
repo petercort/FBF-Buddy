@@ -191,6 +191,10 @@ jobs:
           --url "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Web/sites/$BACKEND_APP/sitecontainers/main?api-version=2024-11-01" \
           --body "$BODY" \
           --output none
+        az webapp log config \
+          --resource-group "$RESOURCE_GROUP" \
+          --name "$BACKEND_APP" \
+          --docker-container-logging filesystem
 
         HOST_NAME=$(az webapp show \
           --resource-group "$RESOURCE_GROUP" \
@@ -249,6 +253,10 @@ jobs:
           --url "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Web/sites/$DISCORD_BOT_APP/sitecontainers/discord-buddy?api-version=2024-11-01" \
           --body "$BODY" \
           --output none
+        az webapp log config \
+          --resource-group "$RESOURCE_GROUP" \
+          --name "$DISCORD_BOT_APP" \
+          --docker-container-logging filesystem
 
         HOST_NAME=$(az webapp show \
           --resource-group "$RESOURCE_GROUP" \
