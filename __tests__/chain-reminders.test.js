@@ -2,6 +2,7 @@ import {
   buildRideReminderMessage,
   buildWeeklyReminderMessage,
   getMilesSinceWax,
+  getOverdueBikes,
   getWaxReminderLevel,
   isSupportedRideType
 } from '../services/backend/src/shared-library/chain-reminders.js';
@@ -40,5 +41,26 @@ describe('Chain wax reminders', () => {
     expect(message).toContain('Weekly chain wax reminder');
     expect(message).toContain('Road Bike: 300 miles');
     expect(message).toContain('Gravel Bike: 175 miles');
+  });
+
+  it('excludes retired bikes from reminders', () => {
+    const overdueBikes = getOverdueBikes([
+      {
+        name: 'Active Bike',
+        distance: 500000,
+        lastWaxedDistance: 0,
+        retired: false
+      },
+      {
+        name: 'Retired Bike',
+        distance: 500000,
+        lastWaxedDistance: 0,
+        retired: true
+      }
+    ]);
+
+    expect(overdueBikes).toEqual([
+      { name: 'Active Bike', milesSinceWax: 311, level: 'due' }
+    ]);
   });
 });

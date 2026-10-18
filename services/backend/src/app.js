@@ -10,6 +10,7 @@ import {
   buildRideReminderMessage,
   buildWeeklyReminderMessage,
   getMilesSinceWax,
+  getOverdueBikes,
   getWaxReminderLevel,
   isSupportedRideType
 } from './shared-library/chain-reminders.js';
@@ -87,19 +88,18 @@ async function runWeeklyWaxReminders() {
   });
 
   for (const user of users) {
+    try {
+      const stravaAccessToken = await getStravaAuthentication(user.dataValues);
+      await setupBikes(user.strava_user_id, user.userId, stravaAccessToken);
+    } catch (error) {
+      console.error(`Bike reconciliation failed for Discord user ${user.userId}:`, error.message);
+      continue;
+    }
+
     const bikes = await BikesTable.findAll({
       where: { userId: user.userId, retired: false }
     });
-    const overdueBikes = bikes
-      .map((bike) => {
-        const milesSinceWax = getMilesSinceWax(bike.distance, bike.lastWaxedDistance);
-        return {
-          name: bike.name,
-          milesSinceWax,
-          level: getWaxReminderLevel(milesSinceWax)
-        };
-      })
-      .filter((bike) => bike.level);
+    const overdueBikes = getOverdueBikes(bikes);
 
     if (overdueBikes.length === 0) {
       continue;
@@ -577,6 +577,7 @@ async function setupBikes(athleteId, userId, stravaAccessToken) {
     await retireInactiveBikes(BikesTable, userId, activeBikeIds);
   } catch (error) {
     console.error('Error fetching athlete data:', error.status, error.message);
+    throw error;
   }
 }
 

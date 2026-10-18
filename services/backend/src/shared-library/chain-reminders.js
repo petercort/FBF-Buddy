@@ -24,6 +24,20 @@ export function getWaxReminderLevel(milesSinceWax) {
   return null;
 }
 
+export function getOverdueBikes(bikes) {
+  return bikes
+    .filter((bike) => bike.retired !== true)
+    .map((bike) => {
+      const milesSinceWax = getMilesSinceWax(bike.distance, bike.lastWaxedDistance);
+      return {
+        name: bike.name,
+        milesSinceWax,
+        level: getWaxReminderLevel(milesSinceWax)
+      };
+    })
+    .filter((bike) => bike.level);
+}
+
 export function buildRideReminderMessage(bikeName, milesSinceWax) {
   if (getWaxReminderLevel(milesSinceWax) === 'due') {
     return bikeName
