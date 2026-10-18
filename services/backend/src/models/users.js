@@ -10,5 +10,6 @@ export default (sequelize, DataTypes) => {
         strava_connected: DataTypes.BOOLEAN,
         strava_refresh_token: DataTypes.TEXT,
         strava_expires_at: DataTypes.INTEGER,
+        lastWaxReminderAt: DataTypes.DATE,
     });
 };

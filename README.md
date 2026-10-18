@@ -44,5 +44,11 @@ docker-compose up --build
 | /i_waxed_my_chain | bike_name (req) date (optional) mileage (optional) | Updated the last_waxed field on the app. With no optional params passed it will update to the current date and mileage. | /i_waxed_my_chain bike_name: Joe date: 12/24/2024 mileage: 355 | If successful, returns the date and mileage in the system for a last wax, otherwise returns an error. | 
 | /get_last_ride | none | Returns the last ride you did according to Strava | /get_last_ride | Returns info on the last ride you did. |
 
+### Chain wax reminders
+
+Ride and VirtualRide activities with an assigned Strava bike update that bike's mileage. The bot sends ride-time reminders after 150 miles and overdue reminders after 250 miles. While any active bike remains above a threshold, the bot also sends one combined reminder per user every seven days.
+
+Virtual rides must have the correct bike assigned in Strava so the webhook can attribute the mileage.
+
   ## Owner Maintainers
   - @petercort

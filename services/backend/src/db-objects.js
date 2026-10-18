@@ -50,6 +50,9 @@ async function initializeDatabase() {
     await sequelizeInstance.query(
       'ALTER TABLE "bikes" ADD COLUMN IF NOT EXISTS "retired" BOOLEAN NOT NULL DEFAULT FALSE'
     );
+    await sequelizeInstance.query(
+      'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "lastWaxReminderAt" TIMESTAMP WITH TIME ZONE'
+    );
 
     // Initialize models
     console.log('[DB] Initializing database models...');
